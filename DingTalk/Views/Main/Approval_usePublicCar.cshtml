@@ -1,0 +1,232 @@
+﻿@{
+    Layout = null;
+}
+
+<!--右侧实体内容-->
+<el-main id="partPage" style="position:relative;">
+    <div class="head-fixed" onclick="loadPage('/Main/approval')">
+        <i class="el-icon-arrow-left"></i>
+        {{FlowName}}-{{nodeInfo.NodeName}}
+    </div>
+    <el-form v-on:submit.native.prevent :model="tableForm" :rules="rules" ref="tableForm" label-width="120px" class="demo-ruleForm">
+        @RenderPage("~/Views/Shared/endForm.cshtml")
+        <el-form-item label="驾驶员">
+            <el-input v-model="tableForm.DrivingMan" style="width:200px;" :disabled="true"></el-input>
+        </el-form-item>
+        <el-form-item label="同行人">
+            <el-input v-model="tableForm.PeerNumber" style="width:500px;" :disabled="true"></el-input>
+        </el-form-item>
+
+        <el-form-item label="用车事由">
+            <el-input v-model="tableForm.MainContent" style="width:550px;" :disabled="true"></el-input>
+        </el-form-item>
+        <hr />
+        <el-form-item label="计划行车路线">
+            <el-input v-model="tableForm.PlantTravelWay" style="width:550px;" :disabled="true"></el-input>
+        </el-form-item>
+
+        <template v-if="NodeId > 2">
+            <el-form-item label="实际行车路线" prop="FactTravelWay">
+                <sam-input :value.sync="tableForm.FactTravelWay" :disabled="ifDisabeleEdit" style="width:550px;"></sam-input>
+            </el-form-item>
+            <el-form-item label="起始公里数" prop="StartKilometres">
+                <sam-input :value.sync="tableForm.StartKilometres" type="number" :disabled="ifDisabeleEdit"></sam-input>
+            </el-form-item>
+            <el-form-item label="结束公里数" prop="EndKilometres">
+                <sam-input :value.sync="tableForm.EndKilometres" type="number" :disabled="ifDisabeleEdit"></sam-input>
+            </el-form-item>
+            <el-form-item label="使用公里数">
+                <el-input v-model="UseKilometres" :disabled="true"></el-input>
+            </el-form-item>
+        </template>
+
+        <el-form-item label="开始时间">
+            <el-input v-model="tableForm.StartTime" :disabled="true"></el-input>
+        </el-form-item>
+        <el-form-item label="返回时间">
+            <el-input v-model="tableForm.EndTime" :disabled="true"></el-input>
+        </el-form-item>
+
+        <el-form-item label="车辆选择" prop="CarId" v-if="NodeId == 2 && index == 0">
+            <el-select v-model="tableForm.CarId" v-on:change="selectCar" filterable placeholder="请选择">
+                <el-option v-for="item in carList"
+                           :key="item.Id"
+                           :label="item.Name + ' - ' + item.CarNumber"
+                           :value="item.Id">
+                </el-option>
+            </el-select>
+            <template v-if="CarObj && CarObj.IsOccupyCar">
+                <span style="color:red;">当前被占用,占用情况如下</span>
+                <p v-for="u in useTimeList">
+                    <span>流水号:{{u.taskid}}</span>
+                    <span>驾驶员:{{u.name}}</span>
+                    <span>占用时间:{{u.time}}</span>
+                </p>
+            </template>
+        </el-form-item>
+
+        <el-form-item label="使用车辆" v-if="NodeId > 2">
+            <el-select v-model="carName" v-on:change="selectCar2" filterable v-if="NodeId == 4 && Index == 0">
+                <el-option v-for="item in carList"
+                           :key="item.Id"
+                           :label="item.carName"
+                           :value="item.carName">
+                </el-option>
+            </el-select>
+            <el-input v-else v-model="carName" :disabled="true"></el-input>
+            @*<el-button type="primary" v-on:click="choose = true" v-if="NodeId == 4 && Index == 0 && !choose">重新选择</el-button>*@
+        </el-form-item>
+        @RenderPage("~/Views/Shared/endButton.cshtml")
+        <el-form-item>
+            <el-button type="primary" v-on:click="printTable" v-if="state=='已完成'" :disabled="disablePage">打印表单</el-button>
+        </el-form-item>
+    </el-form>
+</el-main>
+
+<script>
+    var demo = new Vue({
+        el: "#partPage",
+        mixins: [mixin],
+        data: function () {
+            return {
+                carList: [],
+                useTimeList: [],
+                choose: false,
+                //钉一下需要的参数
+                carName: '',
+                ifDisabeleEdit: Index != 0,
+                rules: {
+                    CarId: { required: true, message: '选派车辆不能为空', trigger: 'blur' },
+                    FactTravelWay: { required: true, message: '实际行车路线不能为空', trigger: 'blur' },
+                    StartKilometres: [{ required: true, message: '起始公里数不能为空', trigger: 'blur' }],
+                    EndKilometres: [{ required: true, message: '结束公里数不能为空', trigger: 'blur' }]
+                }
+            }
+        },
+        methods: {
+            onSubmit() {
+                console.log('submit!')
+                var that = this
+                let url = '/CarTable/TableModify'
+                var param = _cloneObj(this.tableForm)
+                param.UseKilometres = this.UseKilometres
+                console.log(param)
+                this.$refs['tableForm'].validate((valid) => {
+                    if (valid) {
+                        this._postData(url, function () {
+                            that.aggreSubmit()
+                        }, param)
+                    }
+                    else {
+                        that.$alert('表单信息不全或有误', '提示信息', {
+                            confirmButtonText: '确定'
+                        })
+                    }
+                })
+            },
+            //选车操作
+            selectCar(value) {
+                //value = JSON.parse(value)
+                console.log('选车操作')
+                console.log(value)
+                let car = {}
+                this.useTimeList = []
+                for (let c of this.carList) {
+                    if (c.Id == value) {
+                        car = c
+                        if (!c.UseMan) break
+                        let nameList = c.UseMan.split(',')
+                        let timeList = c.UseTimes.split(',')
+                        let idList = c.TaskId.split(',')
+                        for (var i = 0; i < nameList.length; i++) {
+                            this.useTimeList.push({
+                                name: nameList[i],
+                                time: timeList[i],
+                                taskid: idList[i]
+                            })
+                        }
+                    }
+                }
+                this.tableForm.CarId = car.Id
+                this.tableForm.Name = car.Name
+                this.tableForm.OccupyCarId = car.OccupyCarId
+                this.tableForm.IsOccupyCar = car.IsOccupyCar
+            },
+            selectCar2(value) {
+                //value = JSON.parse(value)
+                console.log('选车操作')
+                console.log(value)
+                let car = {}
+                this.useTimeList = []
+                for (let c of this.carList) {
+                    if (c.carName == value) {
+                        car = c
+                        if (!c.UseMan) break
+                        let nameList = c.UseMan.split(',')
+                        let timeList = c.UseTimes.split(',')
+                        for (var i = 0; i < nameList.length; i++) {
+                            this.useTimeList.push({
+                                name: nameList[i],
+                                time: timeList[i]
+                            })
+                        }
+                    }
+                }
+                this.tableForm.CarId = car.Id
+                this.tableForm.Name = car.Name
+                this.tableForm.OccupyCarId = car.OccupyCarId
+                this.tableForm.IsOccupyCar = car.IsOccupyCar
+            },
+            printTable() {
+                this.PostData('CarTableNew/GetPrintPDF', {
+                    UserId: DingData.userid,
+                    TaskId: TaskId,
+                    IsPublic: true
+                }, () => { this.$message({ type: 'success', message: `获取成功，请在工作通知中查收` }); })
+            },
+            
+            getUseCarTable() {
+                var that = this
+                this._getData("/CarTable/TableQuary", function (data2) {
+                    if (!data2[0].FactTravelWay) data2[0].FactTravelWay = data2[0].PlantTravelWay
+                    that.tableForm = data2[0]
+                    //that.ruleForm['Mark'] = ''
+                    if (NodeId <= 2) that.tableForm['CarId'] = ''
+                    var param = {
+                        startTime: that.tableForm.StartTime,
+                        endTime: that.tableForm.EndTime
+                    }
+                    that.GetData('CarMananger/QuaryByTimeNew' + _formatQueryStr(param), function (data) {
+                        for (let d of data) {
+                            if (d.Id == that.tableForm.CarId) {
+                                that.carName = d.Name + ' - ' + d.CarNumber
+                                that.tableForm['Name'] = d.Name
+                            }
+                            d['carName'] = d.Name + ' - ' + d.CarNumber
+                        }
+                        that.carList = data
+                    })
+                }, { TaskId: TaskId })
+            }
+        },
+        created: function () {
+            this.initEnd(() => {
+                this.getUseCarTable()
+            })
+        },
+        computed: {
+            UseKilometres: function () {
+                return this.tableForm.EndKilometres - this.tableForm.StartKilometres
+            },
+            CarObj: function () {
+                for (let car of this.carList) {
+                    if (car.Id == this.tableForm.CarId)
+                        return car
+                }
+            }
+        }
+    })
+</script>
+
+
+

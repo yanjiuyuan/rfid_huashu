@@ -1,0 +1,94 @@
+﻿@{
+    Layout = null;
+}
+
+<!--右侧实体内容-->
+<el-main id="partPage" style="position:relative;">
+    <div class="head-fixed" onclick="loadPage('/Main/approval')">
+        <i class="el-icon-arrow-left"></i>
+        {{FlowName}}-{{nodeInfo.NodeName}}
+    </div>
+    <el-form v-on:submit.native.prevent :model="tableForm" :rules="rules" ref="tableForm" label-width="120px" class="demo-tableForm">
+
+        @RenderPage("~/Views/Shared/endForm.cshtml")
+        <el-form-item label="单位名称">
+            <el-input v-model="tableForm.Company" style="width:400px;" :disabled="true"></el-input>
+        </el-form-item>
+        <el-form-item label="车牌号">
+            <el-input v-model="tableForm.CarNo" style="width:200px;" :disabled="true"></el-input>
+        </el-form-item>
+
+        <el-form-item label="联系方式">
+            <el-input v-model="tableForm.Tel" style="width:200px;" :disabled="true"></el-input>
+        </el-form-item>
+        <el-form-item label="物品名称">
+            <el-input v-model="tableForm.Name" style="width:300px;" :disabled="true"></el-input>
+        </el-form-item>
+        <el-form-item label="数量">
+            <el-input v-model="tableForm.Count" style="width:200px;" :disabled="true"></el-input>
+        </el-form-item>
+        <el-form-item label="单位">
+            <el-input v-model="tableForm.Unit" style="width:100px;" :disabled="true"></el-input>
+        </el-form-item>
+
+
+        <el-form-item label="放行理由">
+            <el-input v-model="tableForm.Cause" style="width:550px;" type="textarea" :disabled="true"></el-input>
+        </el-form-item>
+
+        <el-form-item label="放行日期">
+            <el-input v-model="tableForm.Date " style="width:200px;" :disabled="true"></el-input>
+        </el-form-item>
+        <!--图片展示-->
+        <el-form-item v-if="imageList.length > 0" label="相关图片">
+            <img v-for="img in imageList" v-on:click="handlePictureCardPreview2(img)" :src="img.url" class="imgList" />
+        </el-form-item>
+        <div class="pre-image" v-if="showPre" v-on:click="showPre = false">
+            <img :src="preUrl" />
+        </div>
+        <hr />
+        <!--添加审批人-->
+        @RenderPage("~/Views/Shared/endButton.cshtml")
+        <template v-if="state=='已完成'">
+            <el-form-item>
+                <el-button type="primary" v-on:click="printTable" :disabled="disablePage">打印表单</el-button>
+            </el-form-item>
+        </template>
+    </el-form>
+</el-main>
+
+<script>
+    var demo = new Vue({
+        el: "#partPage",
+        mixins: [mixin],
+        data: function () {
+            return {
+                noEdit: true,
+                addPeopleNodes: [], //额外添加审批人节点数组
+            }
+        },
+        methods: {
+            onSubmit() {
+                this.aggreSubmit()
+            },
+            printTable() {
+                this.PostData('MaterialRelease/PrintAndSend', {
+                    UserId: DingData.userid,
+                    TaskId: TaskId
+                }, () => { this.elementAlert('提示信息', '获取成功，请在工作通知中查收') })
+            },
+            getTable() {
+                this.GetData('MaterialRelease/Read?taskid=' + TaskId, (res) => {
+                    this.tableForm = res
+                })
+            }
+        },
+        created: function () {
+            this.initEnd(() => { this.getTable() })
+        }
+    })
+
+</script>
+
+
+

@@ -1,0 +1,160 @@
+﻿@{
+    Layout = null;
+}
+
+<!--右侧实体内容-->
+<el-main id="partPage" style="position:relative;">
+    <div class="head-fixed" onclick="loadPage('/Main/approval')">
+        <i class="el-icon-arrow-left"></i>
+        {{FlowName}}-{{nodeInfo.NodeName}}
+    </div>
+    <el-form v-on:submit.native.prevent :model="tableForm" :rules="rules" ref="tableForm" label-width="120px" class="demo-ruleForm">
+        @RenderPage("~/Views/Shared/endForm.cshtml")
+        <el-form-item label="驾驶员">
+            <el-input v-model="tableForm.DrivingMan" style="width:200px;" :disabled="true"></el-input>
+        </el-form-item>
+        <el-form-item label="同行人">
+            <el-input v-model="tableForm.PeerNumber" style="width:500px;" :disabled="true"></el-input>
+        </el-form-item>
+        <el-form-item label="车牌号">
+            <el-input v-model="tableForm.CarNumber" style="width:550px;" :disabled="true"></el-input>
+        </el-form-item>
+        <el-form-item label="用车事由">
+            <el-input v-model="tableForm.MainContent" style="width:550px;" :disabled="true"></el-input>
+        </el-form-item>
+
+        <hr />
+        <el-form-item label="计划行车路线">
+            <el-input v-model="tableForm.PlantTravelWay" style="width:550px;" :disabled="true"></el-input>
+        </el-form-item>
+
+        <template v-if="reInput">
+            <el-form-item label="实际行车路线" prop="FactTravelWay">
+                <el-input v-model="tableForm.FactTravelWay" :disabled="ifDisabeleEdit" style="width:550px;"></el-input>
+            </el-form-item>
+            <el-form-item label="起始公里数" prop="StartKilometres">
+                <el-input v-model="tableForm.StartKilometres" :disabled="ifDisabeleEdit"></el-input>
+            </el-form-item>
+            <el-form-item label="结束公里数" prop="EndKilometres">
+                <el-input v-model="tableForm.EndKilometres" :disabled="ifDisabeleEdit"></el-input>
+            </el-form-item>
+            <el-form-item label="使用公里数">
+                <el-input v-model="UseKilometres" :disabled="true"></el-input>
+            </el-form-item>
+
+        </template>
+
+
+        @*<el-form-item label="起始公里数">
+            <el-input v-model="ruleForm.StartKilometres" :disabled="true"></el-input>
+        </el-form-item>*@
+        <el-form-item label="开始时间">
+            <el-input v-model="tableForm.StartTime" :disabled="true"></el-input>
+        </el-form-item>
+        <el-form-item label="返回时间">
+            <el-input v-model="tableForm.EndTime" :disabled="true"></el-input>
+        </el-form-item>
+        <!--图片展示-->
+        <el-form-item v-if="imageList.length > 0" label="起始公里数照片">
+            <img v-for="img in imageList" v-on:click="handlePictureCardPreview2(img)" :src="img.url" class="imgList" />
+        </el-form-item>
+        <div class="pre-image" v-if="showPre" v-on:click="showPre = false">
+            <img :src="preUrl" />
+        </div>
+
+        @RenderPage("~/Views/Shared/endButton.cshtml")
+        <el-form-item>
+            <el-button type="primary" v-on:click="printTable" v-if="state=='已完成'" :disabled="disablePage">打印表单</el-button>
+        </el-form-item>
+    </el-form>
+
+    <div class="pre-image" v-if="showPre" v-on:click="showPre = false">
+        <img :src="preUrl"/>
+    </div>
+
+</el-main>
+
+<script>
+    if (UrlObj.flowid) {
+        FlowId = UrlObj.flowid
+        NodeId = UrlObj.nodeid
+        TaskId = UrlObj.taskid
+        State = UrlObj.state
+        Id = UrlObj.id
+        var Index = UrlObj.index
+    }
+    var demo = new Vue({
+        el: "#partPage",
+        mixins: [mixin],
+        data: function () {
+            return {
+                carList: [],
+                tableForm: {},
+                reInput: false,
+                ifDisabeleEdit: (Index != 0 || NodeId ==5),
+                //图片上传参数
+                dialogImageUrl: '',
+                dialogVisible: false,
+                rules: {
+                    FactTravelWay: { required: true, message: '实际行车路线不能为空', trigger: 'blur' },
+                    StartKilometres: [{ required: true, message: '起始公里数不能为空', trigger: 'blur' }],
+                    EndKilometres: [{ required: true, message: '结束公里数不能为空', trigger: 'blur' }]
+                }
+            }
+        },
+        methods: {
+            onSubmit(formName) {
+                console.log('submit!')
+                var that = this
+                this.$refs['tableForm'].validate((valid) => {
+                    if (valid) {
+                        let url = '/CarTable/TableModify'
+                        var param = _cloneObj(that.tableForm)
+                        param.UseKilometres = that.UseKilometres
+                        that._postData(url, function () {
+                            that.aggreSubmit()
+                        }, param)
+                    }
+                    else {
+                        that.$alert('表单信息不全或有误', '提示信息', {
+                            confirmButtonText: '确定'
+                        })
+                    }
+                })
+            },
+            printTable() {
+                this.PostData('CarTableNew/GetPrintPDF', {
+                    UserId: DingData.userid,
+                    TaskId: TaskId,
+                    IsPublic: false
+                }, () => { this.$message({ type: 'success', message: `获取成功，请在工作通知中查收` }); })
+            },
+            getUseCarTable() {
+                var that = this
+                that._getData('/CarTable/TableQuary', function (data2) {
+                        if (!data2[0].FactTravelWay) data2[0].FactTravelWay = data2[0].PlantTravelWay
+                        that.tableForm = data2[0]
+                    }
+                , { TaskId: TaskId })
+            },
+            
+        },
+        computed: {
+            UseKilometres: function () {
+                return parseInt(this.tableForm.EndKilometres - 0) - parseInt(this.tableForm.StartKilometres - 0)
+            }
+        },
+        created: function () {
+            this.initEnd(() => { this.getUseCarTable() })
+            if (NodeId == 3 && Index == 0) {
+                this.elementAlert('提示', '该步骤需要拍照上传，请到移动端审批。')
+                this.disablePage = true
+            }
+            if (NodeId > 2) this.reInput = true
+        }
+    })
+ 
+</script>
+
+
+

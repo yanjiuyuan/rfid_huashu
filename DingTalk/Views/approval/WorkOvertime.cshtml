@@ -1,0 +1,156 @@
+﻿@{
+    Layout = null;
+}
+
+<!--右侧实体内容-->
+<el-main id="partPage" style="position:relative;">
+    <div class="head-fixed" onclick="loadPage('/Main/approval')">
+        <i class="el-icon-arrow-left"></i>
+        {{FlowName}}-{{nodeInfo.NodeName}}
+    </div>
+    <el-form v-on:submit.native.prevent :model="ruleForm" :rules="rules" ref="ruleForm" label-width="120px" class="demo-ruleForm">
+        @RenderPage("~/Views/Shared/startForm.cshtml")
+    </el-form>
+    <el-form v-on:submit.native.prevent :model="tableForm" :rules="rules" ref="tableForm" label-width="130px" class="demo-ruleForm"
+             enctype="multipart/form-data">
+        <el-form-item label="加班事由" prop="OverTimeContent">
+            <sam-input :value.sync="tableForm.OverTimeContent" :required="true" :maxlength="80"></sam-input>
+        </el-form-item>
+        <el-form-item label="加班日期" prop="DateTime">
+            <div class="block">
+                <el-date-picker v-model="tableForm.DateTime"
+                                type="date" :editable="false"
+                                value-format="yyyy-MM-dd"
+                                placeholder="选择日期" :editable="false"
+                                align="right">
+                </el-date-picker>
+            </div>
+        </el-form-item>
+        <el-form-item label="加班时间" prop="StartTime">
+            <el-time-select placeholder="起始时间"
+                            v-model="tableForm.StartTime" :editable="false"
+                            :picker-options="{
+                              start: '08:30',
+                              step: '00:30',
+                              end: '23:00',
+                              maxTime: tableForm.EndTimeTime
+                            }">
+            </el-time-select>
+            <el-time-select placeholder="结束时间"
+                            v-model="tableForm.EndTimeTime" :editable="false"
+                            :picker-options="{
+                              start: '08:30',
+                              step: '00:30',
+                              end: '23:30',
+                              minTime: tableForm.StartTime
+                            }">
+        </el-form-item>
+        <el-form-item label="加班时长(小时)" v-if="UseTime">
+            <el-input v-model="UseTime" style="width:200px;" :disabled="true"></el-input>
+        </el-form-item>
+        <hr />
+    </el-form>
+    <el-form v-on:submit.native.prevent :model="ruleForm" :rules="rules" ref="ruleForm" label-width="120px" class="demo-ruleForm">
+
+        @RenderPage("~/Views/Shared/startButton.cshtml")
+    </el-form>
+</el-main>
+
+<script>
+    var demo = new Vue({
+        el: "#partPage",
+        mixins: [mixin],
+        data: function () {
+            return {
+                tableForm: {
+                    TaskId: '',
+                    StartTime: '',
+                    ApplyMan: DingData.nickName,
+                    OverTimeContent: '',
+                    EndTimeTime: '',
+                    UseTime: '',
+                    DateTime: ''
+                }
+            }
+        },
+        methods: {
+            onSubmit(formName) {
+                var that = this
+                //this.fileListToUrl()
+                this.$refs['tableForm'].validate((valid) => {
+                    if (valid) {
+                        let url = '/OverTimeTable/OverTimeTableSave'
+                        var param = _cloneObj(that.tableForm)
+                        param.UseTime = that.UseTime
+                        let callBack = function (taskId) {
+                            console.log(taskId)
+                            param.TaskId = taskId
+                            console.log(JSON.stringify(param))
+                            that._postData(url, function (data) {
+                                that.$alert('恭喜提交成功', '提示信息', {
+                                    confirmButtonText: '确定',
+                                    callback: action => {
+                                        goHome()
+                                    }
+                                })
+                            }, param)
+                        }
+                        that.approvalSubmit(callBack)
+                    }
+                    else {
+                        that.$alert('表单信息不全或有误', '提示信息', {
+                            confirmButtonText: '确定'
+                        })
+                    }
+                })
+                
+            }
+        },
+        created: function () {
+            this.initStart()
+        },
+        computed: {
+            UseTime: function () {
+                if (!this.tableForm.StartTime || !this.tableForm.EndTimeTime) return
+                let hours = 0
+                let StartTime = this.tableForm.StartTime
+                let EndTimeTime = this.tableForm.EndTimeTime
+                let startHour = parseInt(StartTime.split(':')[0])
+                let startMinut = parseInt(StartTime.split(':')[1])
+                let endHour = parseInt(EndTimeTime.split(':')[0])
+                let endMinut = parseInt(EndTimeTime.split(':')[1])
+                if (startMinut) startHour += 0.5
+                if (endMinut) endHour += 0.5
+                if (startHour < 12 && endHour > 12 && endHour < 14) {
+                    hours = 12 - startHour
+                } else if (startHour >= 12 && endHour < 14) {
+                    return '0'
+                } else if (startHour >= 12 && startHour < 14 && endHour >= 14) {
+                    hours = endHour - 13.5
+                } else if (endHour <= 12 || startHour >= 13.5) {
+                    hours = endHour - startHour
+                } else {
+                    hours = endHour - startHour - 1.5
+                }
+                return hours
+
+                if (StartTime >= '13:30' || (StartTime <= '12:00' && EndTimeTime <= '12:00')) {
+                    return _computedTime(startHour, startMinut, endHour, endMinut)
+                } else {
+                    if (endMinut < 30) {
+                        endMinut += 60
+                        endHour --
+                    }
+                    endHour--
+                    endMinut -= 30
+                    return _computedTime(startHour, startMinut, endHour, endMinut)
+                }
+            }
+        }
+    })
+
+
+</script>
+
+
+

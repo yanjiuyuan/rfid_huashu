@@ -1,0 +1,320 @@
+﻿@{
+    Layout = null;
+}
+
+<!--右侧实体内容-->
+
+<el-main id="partPage" style="position:relative;margin-left:1%;">
+    <div class="head-fixed" onclick="loadPage('/Main/approval')">
+        <i class="el-icon-arrow-left"></i>
+        {{FlowName}}-{{nodeInfo.NodeName}}
+    </div>
+    <div>
+        <span>项目名称</span>
+        <el-select v-model="ProjectId" placeholder="请选择" style="width:400px;" v-on:change="selectProject" filterable>
+            <el-option v-for="item in projectList"
+                       :key="item.ProjectId"
+                       :label="item.ProjectName"
+                       :value="item.ProjectId">
+                <span style="float: left">{{item.ProjectId}}-{{ item.ProjectName }}</span>
+                <span style="float: right; color: #8492a6; font-size: 13px"></span>
+            </el-option>
+        </el-select>
+        <span>图纸用途</span>
+        <el-select v-model="ProjectType">
+            <el-option v-for="s of ProjectTypes" :label="s" :value="s" key="s"></el-option>
+        </el-select>
+        <el-button v-on:click="search">搜索</el-button>
+    </div>
+    <!--表格實體-->
+    <h3>待删除图纸Bom列表</h3>
+    <el-Table :data="deleteData" stripe border>
+        <el-Table-column prop="BomId" label="BOM" style="width:250px;">
+        </el-Table-column>
+        <el-Table-column prop="DrawingNo" label="图纸编号">
+        </el-Table-column>
+        <el-Table-column prop="Name" label="部件名称">
+        </el-Table-column>
+        <el-Table-column prop="Sorts" label="部件类别">
+        </el-Table-column>
+        <el-Table-column label="操作">
+            <template slot-scope="scope">
+                <el-button size="mini" type="danger" v-on:click="deleteDevice(scope.$index, scope.row)" v-if="!scope.row.ChangeType">删除</el-button>
+                <el-button size="mini" type="success" v-on:click="deleteDevice(scope.$index, scope.row)" v-else>保留</el-button>
+                <span style="color:red;" v-if="scope.row.ChangeType">已删除</span>
+                <span style="color:green;" v-else>保留</span>
+            </template>
+        </el-Table-column>
+    </el-Table>
+    <div style="text-align:right">
+        <el-pagination v-on:current-change="handleCurrentChange($event)"
+                       :current-page="currentPage"
+                       :page-size="500"
+                       layout="total, prev, pager, next, jumper"
+                       :total="totalRows">
+        </el-pagination>
+    </div>
+    <hr />
+    <h3>待新增图纸Bom列表</h3>
+    <template v-for="(d,index) in dataArr">
+        <!--表格實體-->
+        <el-Table :data="d.tableData" stripe border>
+            <el-Table-column v-for="(value,key) in d.items" :prop="key" :label="value" :key="key">
+            </el-Table-column>
+        </el-Table>
+        <!--底部翻頁-->
+        <div style="text-align:right">
+            <el-pagination v-on:current-change="handleBomPageChange($event,index)"
+                           :current-page="d.currentPage"
+                           :page-sizes="[5]"
+                           :page-size="5"
+                           layout="total, prev, pager, next, jumper"
+                           :total="d.totalRows">
+            </el-pagination>
+        </div>
+        <!--上传表單-->
+        <el-upload class="upload-demo"
+                   action="/drawingupload/UploadAndGetInfo"
+                   :on-success="handleSuccess"
+                   :before-upload="beforeExcelUpload"
+                   multiple
+                   :limit="1"
+                   :on-exceed="handleExceed"
+                   :file-list="excelList">
+            <el-button size="small" type="primary" v-on:click="bomIndex = index">上传{{d.Sorts}}件</el-button>
+            <div slot="tip" class="el-upload__tip">只能上传excel文件，且不超过4M</div>
+        </el-upload>
+        @*</el-form-item>*@
+    </template>
+    <hr />
+    <el-form v-on:submit.native.prevent :model="ruleForm" :rules="rules" ref="ruleForm" label-width="110px" class="demo-ruleForm"
+             id="uploadForm" enctype="multipart/form-data">
+        @RenderPage("~/Views/Shared/startForm.cshtml")
+        <el-form-item label="项目名称" prop="ProjectName">
+            <el-input v-model="ruleForm.ProjectName" :disabled="true"></el-input>
+        </el-form-item>
+        <el-form-item label="图纸设计人员" prop="tpName">
+            <el-input v-model="ruleForm.tpName" style="width:500px;" :disabled="true"></el-input>
+            <el-button class="button-new-tag" size="small" v-on:click="addPeerNumber()">+ 选人</el-button>
+        </el-form-item>
+        <el-form-item label="上传PDF图纸" required="required">
+            <el-upload class="upload-demo"
+                       drag
+                       :file-list="pdfList"
+                       action="/drawingupload/Upload"
+                       :on-remove="HandlePdfFileRemove"
+                       :before-upload="beforePdfFileUpload"
+                       :on-success="handlePdfFileSuccess"
+                       multiple>
+                <i class="el-icon-upload"></i>
+                <div class="el-upload__text">将文件拖到此处，或<em>点击上传</em></div>
+                <div class="el-upload__tip" slot="tip">单个文件不超过9M</div>
+            </el-upload>
+        </el-form-item>
+        <el-form-item label="上传其他附件">
+            <el-upload class="upload-demo"
+                       drag
+                       :file-list="fileList"
+                       action="/drawingupload/Upload"
+                       :on-remove="HandleFileRemove"
+                       :before-upload="BeforeFileUpload"
+                       :on-success="HandleFileSuccess" :on-exceed="HandleFileExceed"
+                       multiple>
+                <i class="el-icon-upload"></i>
+                <div class="el-upload__text">将文件拖到此处，或<em>点击上传</em></div>
+                <div class="el-upload__tip" slot="tip">单个文件不超过9M</div>
+            </el-upload>
+        </el-form-item>
+        @RenderPage("~/Views/Shared/startButton.cshtml")
+    </el-form>
+</el-main>
+
+<script>
+    var upBom = []
+    var demo = new Vue({
+        el: "#partPage",
+        mixins: [mixin],
+        data: function () {
+            return {
+                partData: [],
+                deleteData:[],
+                data: [],
+                fileList: [],
+                bomIndex: 0,
+                ProjectId: '',
+                ProjectName: '',
+                ProjectTypes: ['电气采购', '机械加工', '机械采购', '其他'],
+                ProjectType: '机械加工',
+                dataArr: [
+                    {
+                        data: [],
+                        tableData: [],
+                        Sorts: '标准',
+                        currentPage: 1,
+                        totalRows: 0,
+                        items: {}
+                    },
+                    {
+                        data: [],
+                        tableData: [],
+                        Sorts: '自制',
+                        currentPage: 1,
+                        totalRows: 0,
+                        items: {}
+                    },
+                    {
+                        data: [],
+                        tableData: [],
+                        Sorts: '外购',
+                        currentPage: 1,
+                        totalRows: 0,
+                        items: {}
+                    }],
+            }
+        },
+        methods: {
+            //提交审批
+            onSubmit(formName) {
+                let that = this
+                let deleteItem = []
+                this.deleteData.forEach((item) => {
+                    if (item.ChangeType) {
+                        deleteItem.push(item)
+                    }
+                })
+                if (!(upBom.length || deleteItem.length)) {
+                    this.$message({ type: 'error', message: `表单未填写完整` });
+                    return
+                }//pdfList
+                if (this.pdfList.length <=0) {
+                    this.$message({ type: 'error', message: `请上传图纸` });
+                    return
+                }
+                this.fileListToUrl()
+                let changeParam = {
+                    DrawingChangeList: [...deleteItem, ...upBom],
+                    fileChange: {
+                        "FilePDFUrl": this.ruleForm.FilePDFUrl,
+                        "OldFilePDFUrl": this.ruleForm.OldFilePDFUrl,
+                        "FileUrl": this.ruleForm.FileUrl,
+                        "OldFileUrl": this.ruleForm.OldFileUrl,
+                        "MediaId": this.mediaList.join(','),
+                        "MediaIdPDF": this.mediaPdfList.join(',')
+                    }
+                }
+                let callBack = function (taskId) {
+                    for (let item of changeParam.DrawingChangeList) {
+                        item['TaskId'] = taskId
+                    }
+                    changeParam.fileChange['TaskId'] = taskId
+                    this.PostData('DrawingChange/Save', changeParam, (res) => {
+                        that.doneSubmit()
+                    })
+                }
+                this.approvalSubmit(callBack)
+            },
+            
+            search() {
+                if (!this.ruleForm.ProjectName){
+                    this.$alert('请选择项目名称', '提交错误')
+                    return
+                }
+                this.GetData('/DrawingChange/Query' + _formatQueryStr({
+                    ProjectName: this.ruleForm.ProjectName, ProjectType: this.ProjectType
+                }), (result) => {
+                    this.deleteData = result
+                    this.totalRows = result.length
+                })
+            },
+            deleteDevice(index, row) {
+                row['ChangeType'] == 2 ? this.deleteData[index]['ChangeType'] = 0 : this.deleteData[index]['ChangeType'] = 2
+            },
+            //添加图纸审计人员
+            addPeerNumber() {
+                var that = this
+                DingTalkPC.biz.contact.choose({
+                    users: [],
+                    multiple: false,
+                    corpId: DingData.CorpId,
+                    max: 10,
+                    onSuccess: function (data) {
+                        console.log(data)
+                        let d = data[0]
+                        that.ruleForm.tpName = d.name
+                        that.ruleForm.counts = JSON.stringify({ Designer: d.name, DesignerId: d.emplId })
+                    },
+                    onFail: function (err) { }
+                });
+            },
+            //bom表格翻页
+            handleBomPageChange(page, index) {
+                console.log(page)
+                console.log(index)
+                this.currentPage = page
+                this.dataArr[index].currentPage = page
+                var start = this.pageSize * (page - 1)
+                this.dataArr[index].tableData = _cloneArr(this.dataArr[index].data.slice(start, start + this.pageSize))
+            },
+            //上传文件方法
+            handleSuccess(response, file, fileList) {
+                console.log(response)
+                var tableData = response[0].Value
+                this.dataArr[this.bomIndex].currentPage = 1
+                let BomId = ''
+                if (!(tableData && tableData.length > 0)) return
+                this.data = []
+                for (let i = 0; i < tableData.length; i++) {
+                    let data = tableData[i]
+                    if (i == 0) {
+                        this.items = {}
+                        for (let c in data) {
+                            if (c.substring(0, 6) == 'Column') {
+                                this.items[c] = data[c]
+                                this.dataArr[this.bomIndex].items[c] = data[c]
+                            }
+                            else if (c.length > 10) {
+                                BomId = c
+                            }
+                        }
+                    } else {
+                        if (data['Column1'] && data['Column1'] != "") {
+                            this.dataArr[this.bomIndex].data.push(data)
+                            this.data.push(data)
+                            upBom.push({
+                                BomId: BomId,
+                                DrawingNo: data.Column1,
+                                Name: data.Column2,
+                                Count: data.Column3,
+                                MaterialScience: data.Column4,
+                                Unit: data.Column5,
+                                SingleWeight: data.Column6,
+                                AllWeight: data.Column7,
+                                NeedTime: data.Column8,
+                                Mark: data.Column9,
+                                ChangeType: '1',
+                                Sorts: this.dataArr[this.bomIndex].Sorts
+                            })
+                        }
+                    }
+                }
+                console.log(tableData)
+                //this.totalRows = this.data.length
+                this.dataArr[this.bomIndex].totalRows = this.dataArr[this.bomIndex].data.length
+                this.dataArr[this.bomIndex].tableData = _cloneArr(this.dataArr[this.bomIndex].data.slice(0, this.pageSize))
+            },
+            handleExceed(files, fileList) {
+                this.$message.warning(`当前限制选择 1 个文件，本次选择了 ${files.length} 个文件，共选择了 ${files.length + fileList.length} 个文件`);
+            },
+        },
+        created: function () {
+            this.initStart()
+            for (let s of this.specialRoles) {
+                this.specialRoleNames.push(s.name)
+                this.getSpecialRoleInfo(s.name)
+            }
+        }
+    })
+
+</script>
+
+

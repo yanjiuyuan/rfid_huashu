@@ -1,0 +1,142 @@
+﻿@{
+    Layout = null;
+}
+
+<!--右侧实体内容-->
+<el-main id="partPage" style="position:relative;">
+    <div class="head-fixed" onclick="loadPage('/Main/approval')">
+        <i class="el-icon-arrow-left"></i>
+        {{FlowName}}-{{nodeInfo.NodeName}}
+    </div>
+    <el-form v-on:submit.native.prevent :model="tableForm" ref="tableForm" :rules="rules" label-width="120px" class="demo-ruleForm">
+        @RenderPage("~/Views/Shared/endForm.cshtml")
+        <el-form-item label="项目名称">
+            <el-input v-model="tableForm.ProjectName" style="width:550px;" :disabled="true"></el-input>
+        </el-form-item>
+        <el-form-item label="项目状态">
+            <el-input v-model="tableForm.ProjectState" style="width:550px;" :disabled="true"></el-input>
+        </el-form-item>
+        <el-form-item label="项目编号" v-if="NodeId > 3 || (NodeId == 3 && (index == 1 || index == 0))" prop="ProjectId">
+            <sam-input v-if="index==0" :value.sync="tableForm.ProjectId" style="width:550px;"></sam-input>
+            <el-input v-else v-model="tableForm.ProjectId" style="width:550px;" :disabled="true"></el-input>
+        </el-form-item>
+        <el-form-item label="合作单位">
+            <el-input v-model="tableForm.Customer" style="width:550px;" :disabled="true"></el-input>
+        </el-form-item>
+        <el-form-item label="承担部门">
+            <el-input v-model="tableForm.DeptName" style="width:550px;" :disabled="true"></el-input>
+        </el-form-item>
+        <el-form-item label="项目负责人">
+            <el-input v-model="tableForm.ResponsibleMan" style="width:500px;" :disabled="true"></el-input>
+            <el-input v-model="tableForm.ResponsibleManId" style="display:none;"></el-input>
+        </el-form-item>
+        <el-form-item label="项目组成员">
+            <el-input v-model="tableForm.TeamMembers" style="width:500px;" :disabled="true"></el-input>
+            <el-input v-model="tableForm.TeamMembersId" style="display:none;"></el-input>
+        </el-form-item>
+        <el-form-item label="项目大类">
+            <el-input v-model="tableForm.ProjectType" style="width:300px;" :disabled="true"></el-input>
+        </el-form-item>
+        <el-form-item label="项目小类">
+            <el-input v-model="tableForm.ProjectSmallType" style="width:300px;" :disabled="true"></el-input>
+        </el-form-item>
+        <el-form-item label="创建时间">
+            <el-input v-model="tableForm.CreateTime" style="width:300px;" :disabled="true"></el-input>
+        </el-form-item>
+        <el-form-item label="开始时间">
+            <el-input v-model="tableForm.StartTime" style="width:300px;" :disabled="true"></el-input>
+        </el-form-item>
+        <el-form-item label="结束时间">
+            <el-input v-model="tableForm.EndTime" style="width:300px;" :disabled="true"></el-input>
+        </el-form-item>
+        <el-form-item label="是否评审" v-if="NodeId > 2 || (NodeId == 2 && (index == 1 || index == 0))">
+            <el-radio :disabled="index != 0" v-model="tableForm.IsReview" :label="true">是</el-radio>
+            <el-radio :disabled="index != 0" v-model="tableForm.IsReview" :label="false">否</el-radio>
+        </el-form-item>
+        <!--相关文件-->
+        <el-form-item v-if="fileList.length > 0" label="立项文件">
+            <el-card class="box-card">
+                <div v-for="f in fileList" :key="f.name" class="text item">
+                    <span>{{ f.name }}</span>
+                    @*<el-button size="mini" type="primary" v-on:click="downloadFile(f.mediaId)">下载</el-button>*@
+                    <el-button size="mini" type="primary" v-on:click="downloadServerFile(f.path)">下载</el-button>
+                </div>
+            </el-card>
+        </el-form-item>
+        <hr />
+
+        <!--添加审批人-->
+        @RenderPage("~/Views/Shared/endButton.cshtml")
+        <template v-if="state=='已完成'">
+            <el-form-item>
+                <el-button type="primary" v-on:click="printTable" :disabled="disablePage">打印表单</el-button>
+            </el-form-item>
+        </template>
+    </el-form>
+</el-main>
+
+<script>
+    var demo = new Vue({
+        el: "#partPage",
+        mixins: [mixin],
+        data: function () {
+            return {
+                tableForm: {
+
+                },
+            }
+        },
+        methods: {
+            onSubmit() {
+                var that = this
+                this.$refs['tableForm'].validate((valid) => {
+                    if (valid) {
+                        if (NodeId == 3 || NodeId == 2) {
+                            this.PostData('CreateProject/Modify', this.tableForm, (res) => {
+                                if (NodeId != 3) {
+                                    that.aggreSubmit()
+                                    return
+                                }
+                                this.tableForm['CooperativeUnit'] = this.tableForm.Customer
+                                this.tableForm['ApplyMan'] = this.nodeInfo.NodePeople
+                                this.tableForm['ApplyManId'] = this.nodeInfo.PeopleId
+                                this.tableForm['CompanyName'] = '泉州华中科技大学智能制造研究院'
+                                this.PostData('ProjectNew/AddProject', [this.tableForm], (res) => {
+                                    this.aggreSubmit()
+                                })
+                            })
+                        }
+                        else {
+                            this.aggreSubmit()
+                        }
+                    }
+                    else {
+                        that.$alert('表单信息不全或有误', '提示信息', {
+                            confirmButtonText: '确定'
+                        })
+                    }
+                })
+            },
+            printTable() {
+                this.PostData('createProject/PrintPDF', {
+                    UserId: DingData.userid,
+                    TaskId: TaskId
+                }, () => { this.elementAlert('提示信息', '获取成功，请在工作通知中查收') })
+            },
+            getTable() {
+                this.GetData('/CreateProject/Read' + _formatQueryStr({ TaskId: TaskId }), (res) => {
+                    if (!res.IsReview && res.IsReview != false) res.IsReview = true
+                    this.tableForm = res
+                })
+            },
+
+        },
+ 
+        created: function () {
+            this.initEnd(() => { this.getTable() })
+        }
+    })
+</script>
+
+
+

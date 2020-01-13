@@ -1,0 +1,615 @@
+﻿@{
+    Layout = null;
+}
+
+<!--右侧实体内容-->
+<el-main id="partPage" style="position:relative;">
+    <div class="head-fixed" onclick="loadPage('/Main/approval')">
+        <i class="el-icon-arrow-left"></i>
+        {{FlowName}}-{{nodeInfo.NodeName}}
+    </div>
+    <el-form v-on:submit.native.prevent :model="tableForm" :rules="rules" label-width="120px" class="demo-ruleForm">
+
+        @RenderPage("~/Views/Shared/endForm.cshtml")
+        <el-form-item label="项目类型">
+            <el-input v-model="tableForm.ProjectType" style="width:200px;" :disabled="true"></el-input>
+        </el-form-item>
+        <el-form-item label="项目负责人">
+            <el-input v-model="tableForm.ResponsibleMan" style="width:200px;" :disabled="true"></el-input>
+        </el-form-item>
+        <el-form-item label="小组成员">
+            <el-input v-model="tableForm.TeamMembers" type="textarea" autosize style="width:500px;" :disabled="true"></el-input>
+        </el-form-item>
+        <el-form-item label="计划开始时间">
+            <el-input v-model="tableForm.StartTime" style="width:200px;" :disabled="true"></el-input>
+        </el-form-item>
+        <el-form-item label="计划结束时间">
+            <el-input v-model="tableForm.EndTime" style="width:200px;" :disabled="true"></el-input>
+        </el-form-item>
+        <el-form-item label="实际开始时间">
+            <el-input v-model="tableForm.ActualCycleStart" style="width:200px;" :disabled="true"></el-input>
+        </el-form-item>
+        <el-form-item label="实际结束时间">
+            <el-input v-model="tableForm.ActualCycleEnd" style="width:200px;" :disabled="true"></el-input>
+        </el-form-item>
+
+
+        <el-form-item label="是否有横向合作单位">
+            <el-radio-group v-model="tableForm.IsTransverse" disabled>
+                <el-radio :label=true>是</el-radio>
+                <el-radio :label=false>否</el-radio>
+            </el-radio-group>
+        </el-form-item>
+        <template v-if="tableForm.IsTransverse">
+            <el-form-item label="合同金额" prop="ContractAmount">
+                <el-input v-model="tableForm.ContractAmount" :disabled="true"></el-input>
+            </el-form-item>
+            <el-form-item label="合同编码" prop="ContractNo">
+                <el-input v-model="tableForm.ContractNo" :disabled="true"></el-input>
+            </el-form-item>
+            <el-form-item label="实际到账" prop="ActualMoney">
+                <el-input v-model="tableForm.ActualMoney" :disabled="true"></el-input>
+            </el-form-item>
+        </template>
+
+
+        <el-form-item label="是否有申报纵向项目">
+            <el-radio-group v-model="tableForm.IsPortrait" disabled>
+                <el-radio :label=true>是</el-radio>
+                <el-radio :label=false>否</el-radio>
+            </el-radio-group>
+        </el-form-item>
+        <template v-if="((tableForm.IsPortrait && NodeId > 3) || index == 2) && LongitudinalProject.length">
+            <el-table :data="LongitudinalProject" stripe border>
+                <el-table-column type="index"></el-table-column>
+                <el-table-column v-for="(value,key) in LongitudinalProjectConfig" :prop="key" :label="value" :key="key">
+                </el-table-column>
+            </el-table>
+            <el-button type="primary" v-on:click="printTable(1)">打印纵向项目基本情况表</el-button>
+        </template>
+
+
+
+
+        <el-collapse v-model="activeNames">
+            <el-collapse-item :name="1" :key="1">
+                <template slot="title">
+                    <span style="font-size:20px;">相关文件</span>
+                </template>
+                <template v-for="config in uploadFileConfig" style="border:1px solid">
+                    <el-form-item v-if="(config.fileList.length > 0) && ((NodeId > 3)|| config.label == 'BOM表' || Index == 2)" :label="config.label">
+                        <el-card class="box-card">
+                            <div v-for="f in config.fileList" :key="f.name" class="text item">
+                                <span>{{ f.name }}</span>
+                                <el-button size="mini" type="primary" v-on:click="downloadServerFile(f.path)">下载</el-button>
+                            </div>
+                        </el-card>
+                    </el-form-item>
+                </template>
+            </el-collapse-item>
+            <el-collapse-item :name="2" :key="2" v-if="DetailedList1.length">
+                <template slot="title">
+                    <span style="font-size:20px;">项目采购清单、借用清单、领料清单、入库清单</span>
+                </template>
+                <el-table :data="DetailedList1" stripe border>
+                    <el-table-column type="index"></el-table-column>
+                    <el-table-column label="操作">
+                        <template slot-scope="scope">
+                            <el-button size="mini" type="primary" v-on:click="showDetailedList1(scope.$index, scope.row)">详情</el-button>
+                        </template>
+                    </el-table-column>
+                    <el-table-column v-for="(value,key) in DetailedListConfig" :prop="key" :label="value" :key="key">
+                    </el-table-column>
+                </el-table>
+                <el-form-item :label="'详细信息('+ dt1Index + ')'">
+                    <el-table :data="DetailedList1_detail" stripe border>
+                        <el-table-column type="index"></el-table-column>
+                        <el-table-column v-for="(value,key) in DetailedList1_detailConfig" :prop="key" :label="value" :key="key">
+                        </el-table-column>
+                    </el-table>
+                </el-form-item>
+            </el-collapse-item>
+            <el-collapse-item :name="3" :key="3" v-if="(NodeId != 1 && DetailedList2.length) || Index == 2">
+                <template slot="title">
+                    <span style="font-size:20px;">受理知识产权清单</span>
+                </template>
+                <el-table :data="DetailedList2" stripe border>
+                    <el-table-column type="index"></el-table-column>
+                    <el-table-column label="操作">
+                        <template slot-scope="scope">
+                            <el-button size="mini" type="primary" v-on:click="showDetailedList2(scope.$index, scope.row)">详情</el-button>
+                        </template>
+                    </el-table-column>
+                    <el-table-column v-for="(value,key) in DetailedList2_detailConfig" :prop="key" :label="value" :key="key">
+                    </el-table-column>
+                </el-table>
+                <el-form-item label="申报名称">
+                    <el-input v-model="DetailedList2_detail.Name" :disabled="true"></el-input>
+                </el-form-item>
+                <el-form-item label="申报发明人">
+                    <el-input v-model="DetailedList2_detail.Inventor" :disabled="true"></el-input>
+                </el-form-item>
+                <el-form-item label="申报类别">
+                    <el-input v-model="DetailedList2_detail.ActualType" :disabled="true"></el-input>
+                </el-form-item>
+
+            </el-collapse-item>
+            <el-collapse-item :name="4" :key="4" v-if="((tableForm.IsTransverse && NodeId > 3) || index == 2) && ApplicationUnit.length">
+                <template slot="title">
+                    <span style="font-size:20px;">转化/应用单位情况表</span>
+                </template>
+                <el-table :data="ApplicationUnit" stripe border>
+                    <el-table-column type="index"></el-table-column>
+                    <el-table-column v-for="(value,key) in ApplicationUnitConfig" :prop="key" :label="value" :key="key">
+                    </el-table-column>
+                </el-table>
+                <el-button type="primary" v-on:click="printTable(2)">打印转化/应用单位情况表</el-button>
+            </el-collapse-item>
+            <el-collapse-item :name="5" :key="5" v-if="NodeId != 1">
+                <template slot="title">
+                    <span style="color:red;"> * </span>
+                    <span style="font-size:20px;">项目经费使用情况表</span>
+                </template>
+                <el-table :data="ProjectFundingList" stripe border v-if="NodeId == 2 && Index == 0">
+                    <el-table-column type="index"></el-table-column>
+                    <el-table-column v-for="(value,key,i) in ProjectFundingListConfig" :prop="key" :label="value" :key="key">
+                        <template slot-scope="scope">
+                            <el-input v-if="i==0" type="textarea" v-model="scope.row[key]" :disabled="true"></el-input>
+                            <el-input v-else type="textarea" v-model="scope.row[key]" v-on:change="computeCount(scope.$index,scope.row)"></el-input>
+                        </template>
+                    </el-table-column>
+                </el-table>
+                <el-table :data="ProjectFundingList" stripe border v-else>
+                    <el-table-column type="index"></el-table-column>
+                    <el-table-column v-for="(value,key) in ProjectFundingListConfig" :prop="key" :label="value" :key="key">
+                    </el-table-column>
+                </el-table>
+                <el-button v-if="(NodeId == 2 && Index == 1) || NodeId > 2" type="primary" v-on:click="printTable(3)">打印项目经费使用情况表</el-button>
+            </el-collapse-item>
+        </el-collapse>
+
+        @RenderPage("~/Views/Shared/endButton.cshtml")
+        <template v-if="state=='已完成'">
+            <el-form-item>
+                <el-button type="primary" v-on:click="printPdf" :disabled="disablePage">打印表单</el-button>
+            </el-form-item>
+        </template>
+    </el-form>
+</el-main>
+
+<script>
+    if (UrlObj.flowid) {
+        TaskId = UrlObj.taskid
+    }
+    var demo = new Vue({
+        el: "#partPage",
+        mixins: [mixin],
+        data: function () {
+            return {
+                activeNames: [0],
+                uploadFileConfig: [
+                    {
+                        label: '立项书或建议书',
+                        attribute: 'SuggestBook1',
+                        point: '系统有的内容自动关联文件，没有就是手动上传',
+                        fileList: [],
+                        must: true
+                    },
+                    {
+                        label: '评审PPT',
+                        attribute: 'PPT2',
+                        point: '系统有的内容自动关联文件，没有就是手动上传',
+                        fileList: [],
+                        must: true
+                    },
+                    {
+                        label: '需求规格说明书、产品总体设计书',
+                        attribute: 'DemandBook3',
+                        point: '打包上传',
+                        fileList: [],
+                        must: false
+                    },
+                    {
+                        label: '机械设计图纸',
+                        attribute: 'Drawing4',
+                        point: '打包上传',
+                        fileList: [],
+                        must: false
+                    },
+                    {
+                        label: '电气图纸',
+                        attribute: 'Electrical5',
+                        point: '打包上传',
+                        fileList: [],
+                        must: false
+                    },
+                    {
+                        label: 'BOM表',
+                        attribute: 'Bom6',
+                        point: '打包上传',
+                        fileList: [],
+                        must: false
+                    },
+                    {
+                        label: '软件源代码',
+                        attribute: 'SourceCode7',
+                        point: '打包上传',
+                        fileList: [],
+                        must: false
+                    },
+                    {
+                        label: '使用说明书/操作手册/技术方案/规格说明书',
+                        attribute: 'UseBook8',
+                        point: '打包上传',
+                        fileList: [],
+                        must: false
+                    },
+                    {
+                        label: '合作协议',
+                        attribute: 'CooperationAgreement9',
+                        point: '打包上传',
+                        fileList: [],
+                        must: false
+                    },
+                    {
+                        label: '产品（样机/成品）图片/影像',
+                        attribute: 'Product10',
+                        point: '打包上传',
+                        fileList: [],
+                        must: true
+                    },
+                    {
+                        label: '阶段性整理的问题的分析、解决方案及计划表',
+                        attribute: 'Solution11',
+                        point: '打包上传',
+                        fileList: [],
+                        must: true
+                    },
+                    {
+                        label: '纵向项目申请/中期检查/验收资料',
+                        attribute: 'AcceptanceData14',
+                        point: '打包上传',
+                        fileList: [],
+                        must: false
+                    },
+                    {
+                        label: '其他过程文档设计报告、评审报告、项目计划、设计更改报告等',
+                        attribute: 'ProcessDocumentation15',
+                        point: '打包上传',
+                        fileList: [],
+                        must: false
+                    },
+                    {
+                        label: '项目终止情况报告',
+                        attribute: 'TerminationReport16',
+                        point: '打包上传',
+                        fileList: [],
+                        must: false
+                    },
+                    {
+                        label: '装箱单',
+                        attribute: 'PackingList17',
+                        point: '打包上传',
+                        fileList: [],
+                        must: false
+                    },
+                    {
+                        label: '客户验收单',
+                        attribute: 'AcceptanceSlip18',
+                        point: '打包上传',
+                        fileList: [],
+                        must: false
+                    }],
+                timeRange: [],
+                LongitudinalProjectConfig: {
+                    Name: '申报政策名称',
+                    No: '专项专题编号',
+                    Money: '国拨经费/万',
+                    ActualMoney: '实际到账/万'
+                },
+                ApplicationUnitConfig: {
+                    ApplicationUnitName: '转化/应用单位',
+                    Customer: '客户/联系人',
+                    Post: '职务',
+                    Tel: '联系方式'
+                },
+                ProjectFundingListConfig: {
+                    Subject : '科目(备注)',
+                    Money: '支出数(各科目合计数)',
+                    NameAndMoney: '支出数计算依据(名称+金额)'
+                },
+                DetailedListConfig: {
+                    Type: '类型',
+                    ApplyMan: '申请人',
+                    ApplyTime: '申请时间',
+                    OldTaskId: '流水号'
+                },
+                table1: {},
+                LongitudinalProject: [],//纵向，表1
+                ApplicationUnit: [],//横向，表2
+                DetailedList: [],//项目相关数据，类型(项目采购清单、借用清单、领料清单、入库清单、借用清单、受理知识产权清单)
+                DetailedList1: [], DetailedList1_detail: [], DetailedList1_detailConfig: {}, dt1Index: 0,
+                DetailedList2: [], DetailedList2_detail: {}, DetailedList2_detailConfig: {ApplyMan: '申请人',ApplyTime: '申请时间',OldTaskId: '流水号'},
+                ProjectFundingList: [],//项目经费使用情况
+                defaultProjectFundingList: [
+                    {
+                        Subject: '1、设备费',
+                        Money: '',
+                        NameAndMoney: '',
+                        TaskId: TaskId
+                    },
+                    {
+                        Subject: '其中：购置',
+                        Money: '',
+                        NameAndMoney: '',
+                        TaskId: TaskId
+                    },
+                    {
+                        Subject: '试制',
+                        Money: '',
+                        NameAndMoney: '',
+                        TaskId: TaskId
+                    },
+                    {
+                        Subject: '2、材料费',
+                        Money: '',
+                        NameAndMoney: '',
+                        TaskId: TaskId
+                    },
+                    {
+                        Subject: '3、测试化验加工费',
+                        Money: '',
+                        NameAndMoney: '',
+                        TaskId: TaskId
+                    },
+                    {
+                        Subject: '4、燃料动力费',
+                        Money: '',
+                        NameAndMoney: '',
+                        TaskId: TaskId
+                    },
+                    {
+                        Subject: '5、差旅费',
+                        Money: '',
+                        NameAndMoney: '',
+                        TaskId: TaskId
+                    },
+                    {
+                        Subject: '6、会议费',
+                        Money: '',
+                        NameAndMoney: '',
+                        TaskId: TaskId
+                    },
+                    {
+                        Subject: '7、合作与交流费',
+                        Money: '',
+                        NameAndMoney: '',
+                        TaskId: TaskId
+                    },
+                    {
+                        Subject: '8、出版/文献/信息传播/知识产权事务费',
+                        Money: '',
+                        NameAndMoney: '',
+                        TaskId: TaskId
+                    },
+                    {
+                        Subject: '9、劳务费',
+                        Money: '',
+                        NameAndMoney: '',
+                        TaskId: TaskId
+                    },
+                    {
+                        Subject: '10、专家咨询费',
+                        Money: '',
+                        NameAndMoney: '',
+                        TaskId: TaskId
+                    },
+                    {
+                        Subject: '11、管理费',
+                        Money: '',
+                        NameAndMoney: '',
+                        TaskId: TaskId
+                    },
+                    {
+                        Subject: '12、其他(如用车成本等)',
+                        Money: '',
+                        NameAndMoney: '',
+                        TaskId: TaskId
+                    },
+                    {
+                        Subject: '合计',
+                        Money: '',
+                        NameAndMoney: '',
+                        TaskId: TaskId
+                    }
+                ],
+            }
+        },
+        methods: {
+            onSubmit() {
+                if (NodeId == 2 || NodeId == 8) {
+                    if (NodeId == 2) {
+                        for (let fund of this.ProjectFundingList) {
+                            if ((!fund.Money || !fund.NameAndMoney) && fund.Money != '0' && fund.NameAndMoney != '0') {
+                                this.$alert('项目经费使用情况表没填写完整', '提示信息', {
+                                    confirmButtonText: '确定'
+                                })
+                                return
+                            }
+                        }
+                    }
+                    let param = {
+                        NodeId: NodeId,
+                        projectClosure: this.tableForm,
+                        detailedLists: this.DetailedList,
+                        applicationUnitList: this.ApplicationUnit,
+                        projectFundingList: this.ProjectFundingList,
+                        longitudinalProject: this.LongitudinalProject,
+                    }
+                    console.log(JSON.stringify(param))
+                    this.PostData('ProjectClosure/Modify', param, (res) => {
+                        this.aggreSubmit()
+                    })
+                }
+                else {
+                    this.aggreSubmit()
+                }
+            },
+            computeCount(index, row) {
+                let tmpMoney = 0
+                for (let i = 1; i < this.ProjectFundingList.length - 1; i++) {
+                    //if (!this.ProjectFundingList[i].Money) this.ProjectFundingList[i].Money = 0
+                    tmpMoney += parseFloat(this.ProjectFundingList[i].Money)
+                } 
+                this.ProjectFundingList[0].Money = (this.ProjectFundingList[1].Money - 0) + (this.ProjectFundingList[2].Money - 0)
+                this.ProjectFundingList[this.ProjectFundingList.length - 1].Money = tmpMoney.toFixed(2)
+            },
+            //重新发起审批
+            reApproval() {
+                this.disablePage = true
+                ReApprovalTempData = {
+                    valid: true,
+                    data: this.data,
+                    dataArr: this.dataArr,
+                    imageList: this.imageList,
+                    fileList: this.fileList,
+                    LongitudinalProject: this.LongitudinalProject,
+                    ApplicationUnit: this.ApplicationUnit,
+                    DetailedList: this.DetailedList,
+                    ProjectFundingList: this.ProjectFundingList,
+                    ruleForm: this.ruleForm,
+                    tableForm: this.tableForm,
+                    //ruleForm: Object.assign(this.ruleForm,this.tableForm)
+                }
+                //console.log(JSON.stringify(ReApprovalTempData))
+                for (let m of menu) {
+                    for (let f of m.flows) {
+                        if (f.FlowId == FlowId) {
+                            loadPage(f.PcUrl)
+                        }
+                    }
+                }
+            },
+            //打印相关
+            printTable(index) {
+                this.PostData('ProjectClosure/PrintExcel', {
+                    UserId: DingData.userid,
+                    TaskId: TaskId,
+                    Type: index
+                }, () => { this.elementAlert('提示信息', '获取成功，请在工作通知中查收') })
+            },
+            printPdf() {
+                this.PostData('ProjectClosure/PrintAndSend', {
+                    UserId: DingData.userid,
+                    TaskId: TaskId
+                }, () => { this.elementAlert('提示信息', '获取成功，请在工作通知中查收') })
+            },
+            //详细信息获取
+            showDetailedList1(index, row) {
+                if (!row) return
+                console.log(row)
+                this.dt1Index = index + 1
+                let url = ''
+                switch (row.Type) {//
+                    case '零部件采购申请':
+                        url = 'PurchaseNew/ReadPurchaseTable';
+                        this.DetailedList1_detailConfig = {
+                            CodeNo: '物料编码',
+                            Name: '物料名称',
+                            Standard: '规格型号',
+                            Unit: '单位',
+                            Count: '数量',
+                            Price: '单价(预计)',
+                            Purpose: '用途',
+                            UrgentDate: '需用日期',
+                            Mark: '备注'
+                        }
+                        break;
+                    case '借入申请':
+                        url = 'Borrow/Read';
+                        this.DetailedList1_detailConfig = {
+                            Supplier: '供应商',
+                            CodeNo: '物料编码',
+                            Name: '物料名称',
+                            Standard: '规格型号',
+                            Unit: '单位',
+                            Count: '数量',
+                            Price: '单价(预计)',
+                            Purpose: '用途',
+                            StartTime: '开始日期',
+                            EndTime: '结束日期',
+                            Mark: '备注'
+                        }
+                        break;
+                    case '领料申请':
+                        url = 'Pick/Read';
+                        this.DetailedList1_detailConfig = {
+                            fNumber: '物料编码',
+                            fName: '物料名称',
+                            fQty: '实收数量',
+                            unitName: '单位',
+                            fModel: '型号规格',
+                            fFullName: '供应商'
+                        }
+                        break;
+                    case '入库申请':
+                        url = 'Godown/Read';
+                        this.DetailedList1_detailConfig = {
+                            fNumber: '物料编码',
+                            fName: '物料名称',
+                            fQty: '实收数量',
+                            unitName: '单位',
+                            fModel: '型号规格',
+                            fFullName: '供应商'
+                        }
+                        break;
+                }
+                this.GetData(url + '?TaskId=' + row.OldTaskId, (res) => {
+                    this.DetailedList1_detail = res
+                })
+            },
+            showDetailedList2(index, row) {
+                if (!row) return
+                this.GetData('IntellectualProperty/Read?TaskId=' + row.OldTaskId, (res) => {
+                    this.DetailedList2_detail = res
+                })
+            },
+            //获取数据
+            getTable() {
+                this.GetData('/ProjectClosure/Read' + _formatQueryStr({ TaskId: TaskId }), (res) => {
+                    this.tableForm = res.projectClosure
+                    this.DetailedList = res.detailedLists
+                    this.ApplicationUnit = res.applicationUnitList
+                    this.LongitudinalProject = res.longitudinalProject
+                    this.ProjectFundingList = res.projectFundingList
+                    if (this.ProjectFundingList.length == 0) this.ProjectFundingList = this.defaultProjectFundingList
+
+                    for (let detail of this.DetailedList) {
+                        detail.Type == '知识产权申请' ? this.DetailedList2.push(detail) : this.DetailedList1.push(detail)
+                    }
+                    for (let con of this.uploadFileConfig) {
+                        if (this.tableForm[con.attribute]) {
+                            let urlObj = JSON.parse(this.tableForm[con.attribute])
+                            for (let obj of urlObj) {
+                                con.fileList.push({
+                                    name: obj.FileName,
+                                    path: obj.FileUrl
+                                })
+                            }
+                        }
+                    }
+                    this.showDetailedList1(0, this.DetailedList1[0])
+                    this.showDetailedList2(0, this.DetailedList2[0])
+                })
+            },
+
+        },
+
+        created: function () {
+            this.initEnd(() => { this.getTable() })
+        }
+    })
+</script>
+
+
+

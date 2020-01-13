@@ -1,0 +1,328 @@
+﻿@{
+    Layout = null;
+}
+<style>
+    .el-icon-circle-close {
+        position: absolute;
+        margin-left: 20px;
+        font-size: 20px;
+        color: #f56c6c;
+        z-index: 998;
+    }
+
+    .el-icon-setting {
+        position: absolute;
+        margin-left: 20px;
+        font-size: 20px;
+        color: gray;
+        z-index: 1998;
+    }
+</style>
+<!--右侧实体内容-->
+<el-main id="partPage" style="margin-top:20px;">
+    <el-collapse v-model="activeNames">
+
+        <draggable v-model="menu" v-on:end="dragMenuEnd">
+            <el-collapse-item v-for="(m,i) in menu" :name="i+1" :key="i">
+                <template slot="title">
+                    <span style="font-size:20px;">{{m.SORT_NAME}}({{m.Sort_ID}})</span>
+                    <i v-on:mouseenter="switchSort(m)" v-on:click="editSort(m)" style="margin-left:0;position:relative;" class="el-icon-setting"></i>
+                    <i v-on:mouseenter="switchSort(m)" v-on:click="deleteSort" style="margin-left:0;position:relative;" class="el-icon-circle-close"></i>
+                </template>
+
+                <draggable v-model="m.flows" v-on:end="dragFlowEnd">
+                    <div v-for="l in m.flows" class="approval-box" v-on:click="toApprove(m,l)" style="cursor:pointer;">
+                        <i class="el-icon-circle-close" v-on:mouseenter="switchFlow(l)" v-on:click="deleteFlow"></i>
+                        <div class="approval-box-img" :style="{backgroundPosition:l.Position}"></div>
+                        <p>{{l.FlowName}}({{l.FlowId}})</p>
+                    </div>
+                    <div class="approval-box" v-on:click="ToAddFlow(m)" style="cursor:pointer;">
+                        <div class="approval-box-img" :style="{backgroundPosition:'-540px -180px'}"></div>
+                        <p>添加</p>
+                    </div>
+                </draggable>
+
+            </el-collapse-item>
+        </draggable>
+
+    </el-collapse>
+
+    <el-form v-on:submit.native.prevent :model="ruleForm" :rules="rules" ref="ruleForm" label-width="100px" class="demo-ruleForm"
+             id="uploadForm" enctype="multipart/form-data">
+        <el-form-item label="类别Id" prop="Sort_ID">
+            <el-input v-model="ruleForm.Sort_ID"></el-input>
+        </el-form-item>
+        <el-form-item label="流程类名" prop="SORT_NAME">
+            <el-input v-model="ruleForm.SORT_NAME"></el-input>
+        </el-form-item>
+        <el-form-item label="是否启用" prop="IsEnable">
+            <el-radio-group v-model="ruleForm.IsEnable">
+                <el-radio :label="1">是</el-radio>
+                <el-radio :label="0">否</el-radio>
+            </el-radio-group>
+        </el-form-item>
+        <el-form-item>
+            <el-button type="primary" v-on:click="onSubmit('ruleForm')" :disabled="disablePage">添加类别</el-button>
+        </el-form-item>
+    </el-form>
+
+    <el-dialog title="编辑类别" :visible.sync="dialogFormVisible">
+        <el-form v-on:submit.native.prevent :model="tableForm" :rules="rules" ref="ruleForm" label-width="100px" class="demo-ruleForm"
+                 enctype="multipart/form-data">
+            <template>
+                <el-form-item label="类别Id" prop="Sort_ID">
+                    <el-input v-model="tableForm.Sort_ID"></el-input>
+                </el-form-item>
+                <el-form-item label="类别名称" prop="SORT_NAME">
+                    <el-input v-model="tableForm.SORT_NAME"></el-input>
+                </el-form-item>
+                <el-form-item label="是否启用">
+                    <el-radio-group v-model="tableForm.IsEnable">
+                        <el-radio :label="1">是</el-radio>
+                        <el-radio :label="0">否</el-radio>
+                    </el-radio-group>
+                </el-form-item>
+                <el-form-item label="权限成员(默认全部)" required="required">
+                    <el-tag :key="tag.emplId" v-for="tag in groupPeople" closable
+                            :disable-transitions="false" v-on:close="handleClose(tag)">
+                        {{tag.name}}
+                    </el-tag>
+                    <el-button class="button-new-tag" size="small" v-on:click="addGroup">+ 添加</el-button>
+                </el-form-item>
+                <hr />
+                <el-form-item>
+                    <el-button type="primary" v-on:click="onEditSubmit('ruleForm')">编辑</el-button>
+                    <el-button v-on:click="dialogFormVisible = false">取 消</el-button>
+                </el-form-item>
+            </template>
+        </el-form>
+    </el-dialog>
+</el-main>
+
+<script>
+    var x = -54
+    var y = -46
+    var xTap = -90
+    var yTap = -90
+    let Flow = {}
+    let Sort = {}
+    var demo = new Vue({
+        el: "#partPage",
+        mixins: [mixin],
+        data: function () {
+            return {
+                activeNames: [1,2,3,4,5,6,7,8],
+                name: '',
+                id: '',
+                menu: [],
+                ruleForm: {
+                    Sort_ID: '',
+                    SORT_NAME: '',
+                    CreateTime: _timeToString(new Date()),
+                    IsEnable: 1,
+                    OrderBY: 998,
+                    State: 1,
+                },
+                groupPeople: [],
+                rules: {
+                    Sort_ID: { required: true, message: '该项不能为空', trigger: 'blur' },
+                    SORT_NAME: { required: true, message: '该项不能为空', trigger: 'blur' },
+                },
+                test: null
+            }
+        },
+        methods: {
+            onSubmit(formName) {
+                this.$refs[formName].validate((valid) => {
+                    if (valid) {
+                        let param = {
+                            applyManId: DingData.userid,
+                            FlowSortList: [this.ruleForm]
+                        }
+                        console.log(param)
+                        this.PostData('FlowInfoNew/FlowSortAdd', param, (res) => {
+                            this.$alert('添加成功', '提示');
+                            this.getMenu()
+                        })
+                    }
+                })
+            },
+            onEditSubmit(formName) {
+                this.$refs[formName].validate((valid) => {
+                    if (valid) {
+                        let ids = []
+                        let names = []
+                        for (let g of this.groupPeople) {
+                            ids.push(g.emplId)
+                            names.push(g.name)
+                        }
+                        this.tableForm.ApplyMan = names.join(',')
+                        this.tableForm.ApplyManId = ids.join(',')
+                        console.log(this.tableForm)
+                        this.PostData('FlowInfoNew/LoadFlowModify', { applyManId: DingData.userid, FlowSortList: [this.tableForm] }, (res) => {
+                            this.$alert('编辑成功', '提示');
+                            this.dialogFormVisible = false
+                            this.getMenu()
+                        })
+                    }
+                })
+            },
+            
+            //删除流程,类别
+            switchFlow(flow) {
+                Flow = flow
+            },
+            switchSort(sort) {
+                Sort = sort
+            },
+            deleteFlow(e) {
+                window.event ? window.event.cancelBubble = true : e.stopPropagation();
+                this.$confirm('此操作将永久删除该流程, 是否继续?', '提示', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then(() => {
+                    let param = {
+                        applyManId: DingData.userid,
+                        flowsList: [Flow]
+                    }
+                    this.PostData('FlowInfoNew/FlowDelete', param, (res) => {
+                        this.$message({
+                            type: 'success',
+                            message: '删除成功!'
+                        });
+                        this.getMenu()
+                    })
+                }).catch(() => {
+                    this.$message({
+                        type: 'info',
+                        message: '已取消删除'
+                    });
+                });
+            },
+            deleteSort(e) {
+                window.event ? window.event.cancelBubble = true : e.stopPropagation();
+                this.$confirm('此操作将永久删除该类别, 是否继续?', '提示', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then(() => {
+                    let param = _cloneObj(Sort)
+                    delete param.flows
+                    param = {
+                        applyManId: DingData.userid,
+                        flowSortList: [param]
+                    }
+                    this.PostData('FlowInfoNew/FlowSortDelete', param, (res) => {
+                        this.$message({
+                            type: 'success',
+                            message: '删除成功!'
+                        });
+                        this.getMenu()
+                    })
+                }).catch(() => {
+                    this.$message({
+                        type: 'info',
+                        message: '已取消删除'
+                    });
+                });
+            },
+            editSort(sort) {
+                this.groupPeople = []
+                let ids = sort.ApplyManId.split(',')
+                let names = sort.ApplyMan.split(',')
+                if (sort.ApplyManId == '') {
+                    ids = []
+                    names = []
+                }
+                for (let i = 0; i < ids.length; i++) {
+                    this.groupPeople.push({ emplId: ids[i], name: names[i] })
+                }
+                this.tableForm = sort
+                this.dialogFormVisible = true
+            },
+            //拖动事件
+            dragMenuEnd: function (evt) {
+                let param = _cloneArr(this.menu)
+
+                for (let i = 0; i < param.length; i++) {
+                    delete param[i].flows
+                    console.log(i)
+                    param[i].OrderBY = i + 1
+                }
+                param = {
+                    applyManId: DingData.userid,
+                    FlowSortList: param
+                }
+                console.log(JSON.stringify(param))
+                this.PostData('FlowInfoNew/LoadFlowModify', param, (res) => { })
+            },
+            dragFlowEnd: function (evt) {
+                let flows = []
+                this.test = evt
+                console.log(evt)
+                let sort = null
+                for (let s of this.menu) {
+                    for (let f of s.flows) {
+                        //OrderBY 重新排序
+                        if (f.FlowName == evt.clone.innerText.replace(/\s/g, '').split('(')[0]) {
+                            sort = s
+                        }
+                        if (sort) {
+                            for (let i = 0; i < sort.flows.length; i++) {
+                                sort.flows[i].OrderBY = i + 1
+                            }
+                            flows = sort.flows
+                            break
+                        }
+                    }
+                }
+                console.log(flows)
+                this.PostData('FlowInfoNew/FlowModify', {
+                    applyManId: DingData.userid,
+                    flowsList: flows
+                }, (res) => { })
+            },
+            //获取数据
+            getMenu: function () {
+                this.GetData('FlowInfoNew/LoadFlowSort?DEPT_ID=ALL&userid=' + DingData.userid, (res) => {
+                    res = JSON.stringify(res).replace(/null/g, '""')
+                    this.menu = JSON.parse(res)
+                })
+            },
+            //跳转页面
+            ToAddFlow: function (sort) {
+                editSort = sort
+                loadPage('/Register/AddFlow')
+            },
+            toApprove: function (sort, flow) {
+                editFlow = flow
+                editSort = sort
+                loadPage('/Register/flowInformation')
+            },
+            loadPage: function (url) {
+                $("#tempPage").load(url)
+            },
+        },
+        created: function () {
+            this.getMenu()
+            loadHtml("mainPage", "partPage")
+        }
+    })
+
+    function _cloneArr(arr) {
+        var newArr = []
+        for (var a = 0; a < arr.length; a++) {
+            if (typeof (arr[a]) == 'object') {
+                if (arr[a].length >= 0)
+                    newArr.push($.extend(true, [], arr[a]))
+                else
+                    newArr.push($.extend(true, {}, arr[a]))
+            }
+            else newArr.push(arr[a])
+        }
+        return newArr
+    }
+
+
+</script>

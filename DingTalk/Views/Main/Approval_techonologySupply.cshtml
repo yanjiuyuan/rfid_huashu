@@ -1,0 +1,268 @@
+﻿@{
+    Layout = null;
+}
+
+<!--右侧实体内容-->
+<el-main id="partPage" style="position:relative;">
+    <div class="head-fixed" onclick="loadPage('/Main/approval')">
+        <i class="el-icon-arrow-left"></i>
+        {{FlowName}}-{{nodeInfo.NodeName}}
+    </div>
+    <el-form v-on:submit.native.prevent :model="ruleForm" :rules="rules" ref="ruleForm" label-width="120px" class="demo-ruleForm"
+             id="uploadForm" enctype="multipart/form-data">
+        @RenderPage("~/Views/Shared/endForm.cshtml")
+    </el-form>
+    <el-form v-on:submit.native.prevent :model="tableForm" :rules="rules" ref="tableForm" label-width="120px" class="demo-tableForm">
+
+        <el-form-item label="技术支持部门">
+            <el-input v-model="tableForm.DeptName" style="width:600px;" :disabled="true" type="textarea"></el-input>
+        </el-form-item>
+
+        <el-form-item label="项目负责人">
+            <el-input v-model="tableForm.ResponsibleMan" style="width:200px;" :disabled="true"></el-input>
+        </el-form-item>
+
+        <el-form-item label="其他工程师">
+            <el-input v-model="tableForm.OtherEngineers" style="width:550px;" :disabled="true"></el-input>
+        </el-form-item>
+        <el-form-item label="合作单位" v-if="showSome">
+            <el-input v-model="tableForm.Customer" style="width:300px;" :disabled="true"></el-input>
+        </el-form-item>
+        <el-form-item label="项目大类">
+            <el-input v-model="tableForm.ProjectType" style="width:100px;" :disabled="true"></el-input>
+        </el-form-item>
+        <el-form-item label="紧急程度">
+            <el-input v-model="tableForm.EmergencyLevel" style="width:100px;" :disabled="true"></el-input>
+        </el-form-item>
+
+        <el-form-item label="要求完成时间">
+            <el-input v-model="tableForm.TimeRequired" style="width:200px;" :disabled="true"></el-input>
+        </el-form-item>
+        <el-form-item label="客户项目整体情况" v-if="showSome">
+            <el-input v-model="tableForm.ProjectOverview" style="width:550px;" type="textarea" :disabled="true"></el-input>
+        </el-form-item>
+        <el-form-item label="技术支持内容要点" v-if="showSome">
+            <el-input v-model="tableForm.MainPoints" style="width:550px;" type="textarea" :disabled="true"></el-input>
+        </el-form-item>
+
+        @*<el-form-item label="所属公司">
+                <el-input v-model="tableForm.CompanyName" style="width:300px;" :disabled="true"></el-input>
+            </el-form-item>*@
+        <template v-if="NodeId > 1 || (NodeId == 1 && (index == 1 || index == 0))">
+            <hr />
+            <el-form-item label="测试项目名称" prop="ProjectName">
+                <sam-input :value.sync="tableForm.ProjectName" style="width:400px;" :required="true" :disabled="noEdit"></sam-input>
+            </el-form-item>
+            <el-form-item v-if="NodeId == 1 && index == 0" label="项目组成员" prop="TeamMembers">
+                <sam-group :names.sync="tableForm.TeamMembers" :ids.sync="tableForm.TeamMembersId"></sam-group>
+            </el-form-item>
+            <el-form-item v-else label="项目组成员">
+                <el-input v-model="tableForm.TeamMembers" style="width:500px;" :disabled="true"></el-input>
+                <el-input v-model="tableForm.TeamMembersId" style="display:none;"></el-input>
+            </el-form-item>
+            <el-form-item v-if="NodeId == 1 && index == 0" label="测试项目周期" required="required">
+                <sam-timerange :value1.sync="tableForm.StartTime" :value2.sync="tableForm.EndTime"></sam-timerange>
+            </el-form-item>
+            <template v-else>
+                <el-form-item label="开始日期">
+                    <el-input v-model="tableForm.StartTime" style="width:200px;" :disabled="noEdit"></el-input>
+                </el-form-item>
+                <el-form-item label="结束日期">
+                    <el-input v-model="tableForm.EndTime" style="width:200px;" :disabled="noEdit"></el-input>
+                </el-form-item>
+            </template>
+            <el-form-item label="处理方案" prop="TechnicalProposal" v-if="showSome">
+                <sam-input :value.sync="tableForm.TechnicalProposal" :maxlength="140" type="textarea" :required="true" :disabled="noEdit"></sam-input>
+
+                @*<el-input v-model="tableForm.TechnicalProposal" style="width:550px;" type="textarea" :disabled="noEdit"></el-input>*@
+            </el-form-item>
+
+            <template v-if="NodeId == 1 && index == 0">
+                <el-form-item label="方案文件" required>
+                    <el-upload class="upload-demo"
+                               drag
+                               :file-list="fileList"
+                               action="/drawingupload/Upload"
+                               :on-remove="HandleFileRemove"
+                               :before-upload="BeforeFileUpload"
+                               :on-success="HandleFileSuccess" :on-exceed="HandleFileExceed"
+                               multiple>
+                        <i class="el-icon-upload"></i>
+                        <div class="el-upload__text">将文件拖到此处，或<em>点击上传</em></div>
+                        <div class="el-upload__tip" slot="tip">单个文件不超过9M</div>
+                    </el-upload>
+                </el-form-item>
+            </template>
+            <template v-else>
+                <el-form-item v-if="fileList.length > 0" label="方案文件">
+                    <el-card class="box-card">
+                        <div v-for="f in fileList" :key="f.name" class="text item">
+                            <span>{{ f.name }}</span>
+                            @*<el-button size="mini" type="primary" v-on:click="downloadFile(f.mediaId)">下载</el-button>*@
+                            <el-button size="mini" type="primary" v-on:click="downloadServerFile(f.path)">下载</el-button>
+                        </div>
+                    </el-card>
+                </el-form-item>
+            </template>
+            <el-form-item label="测试项目编号" prop="ProjectNo" v-if="NodeId > 4 || (NodeId == 4 && index == 0)">
+                <el-input v-model="tableForm.ProjectNo" style="width:300px;" :disabled="NodeId > 4"></el-input>
+            </el-form-item>
+        </template>
+    </el-form>
+    <el-form v-on:submit.native.prevent :model="ruleForm" :rules="rules" ref="ruleForm" label-width="150px" class="demo-ruleForm"
+             id="uploadForm" enctype="multipart/form-data">
+        @RenderPage("~/Views/Shared/endButton.cshtml")
+        <template v-if="computedNodeList">
+            <el-form-item>
+                <el-button type="primary" v-on:click="printTable" v-if="State == '已完成'" :disabled="disablePage">打印表单</el-button>
+            </el-form-item>
+        </template>
+    </el-form>
+</el-main>
+
+<script>
+    var demo = new Vue({
+        el: "#partPage",
+        mixins: [mixin],
+        data: function () {
+            return {
+                //钉一下需要的参数
+                showSome: true,
+                noEdit: true,
+                rules: {
+                    TeamMembers: { required: true, message: '项目组成员不能为空', trigger: 'blur' },
+                    StartTime: { required: true, message: '测试项目周期不能为空', trigger: 'blur' },
+                    TechnicalProposal: [{ required: true, message: '处理方案不能为空', trigger: 'blur' }],
+                    ProjectName: [{ required: true, message: '测试项目名称不能为空', trigger: 'blur' }],
+                    ProjectNo: [
+                        { required: true, validator: checkProjectId, trigger: 'blur' },
+                        { required: true, message: '测试项目编号不能为空！', trigger: 'change' }
+                    ]
+                }
+            }
+        },
+        methods: {
+            onSubmit(formName) {
+                demo.fileListToUrl()
+                this.$refs['tableForm'].validate((valid) => {
+                    if (valid && this.ruleForm.FileUrl) {
+                        if (NodeId == 1) {
+                            if (this.fileList.length == 0) {
+                                this.elementAlert('提示信息', '未上传文件') 
+                                return
+                            }
+                            this.fileListToUrl()
+                        }
+                        
+                        if (NodeId == 4) {
+                            this.tableForm['IsCreateProject'] = true
+                            var param2 = {
+                                "CreateTime": _getTime(),
+                                "IsEnable": true,
+                                "ProjectState": '在研',
+                                "IsFinish": false,
+                                "ApplyMan": this.nodeInfo.NodePeople,
+                                "ApplyManId": this.nodeInfo.PeopleId,
+                                "StartTime": this.tableForm.StartTime,
+                                "EndTime": this.tableForm.EndTime,
+                                "TeamMembers": this.tableForm.TeamMembers,
+                                "TeamMembersId": this.tableForm.TeamMembersId,
+                                "ProjectName": this.tableForm.ProjectName,
+                                "ProjectId": this.tableForm.ProjectNo,
+                                "CompanyName": this.tableForm.CompanyName,
+                                "CooperativeUnit": this.tableForm.Customer,
+                                "DeptName": this.tableForm.DeptName,
+                                "ProjectType": this.tableForm.ProjectType,
+                                "ProjectSmallType": '测试',
+                                "ResponsibleMan": this.tableForm.ResponsibleMan,
+                                "ResponsibleManId": this.tableForm.ResponsibleManId,
+                                "ProjectFileUrl": this.ruleForm.FileUrl
+                            }
+                            console.log(JSON.stringify(param2))
+                            this.PostData('TechnicalSupport/Modify', this.tableForm, (res) => {
+                                this.PostData('ProjectNew/AddProject', [param2], (res) => {
+                                    //return
+                                    this.aggreSubmit()
+                                })
+                            })
+                            return
+                        }
+                        //return
+                        this.PostData('TechnicalSupport/Modify', this.tableForm, (res) => {
+                            this.aggreSubmit()
+                        })
+                    }
+                    else {
+                        this.$alert('表单数据不全或有误', '提交错误', {
+                            confirmButtonText: '确定'
+                        });
+                        console.log('error submit!!');
+                        return false;
+                    }
+                })
+            },
+            printTable() {
+                this.PostData('TechnicalSupport/PrintAndSend', {
+                    UserId: DingData.userid,
+                    TaskId: TaskId
+                }, () => { this.elementAlert('提示信息', '获取成功，请在工作通知中查收') })
+            },
+            getHelpTable() {
+                this.GetData('TechnicalSupport/Read?taskid=' + TaskId, (res) => {
+                    this.tableForm = res
+                    if (this.tableForm.OtherEngineersId && NodeId == 1) {
+                        this.tableForm.TeamMembersId = this.tableForm.OtherEngineersId
+                        this.tableForm.TeamMembers = this.tableForm.OtherEngineers
+                        let names = this.tableForm.TeamMembers.split(',')
+                        let ids = this.tableForm.TeamMembersId.split(',')
+                        let addPeoples = []
+                        for (let i = 0; i < ids.length; i++) {
+                            addPeoples.push({
+                                name: names[i],
+                                emplId: ids[i],
+                            })
+                        }
+                        this.addPeopleNodes = [5]
+                        this.nodeList[5].AddPeople = addPeoples
+                        for (let d of addPeoples) {
+                            $("#" + 5).after('<span class="el-tag ' + 5 + '" style="width: 60px; text-align: center; ">' + d.name.substring(0, 4) + '</span >')
+                        }
+                    }
+                })
+            },
+        },
+        computed: {
+            computedNodeList() {
+                if (NodeId != 1) return true
+                if (!this.tableForm.TeamMembers) return true
+                console.log('233333333333')
+                console.log(this.tableForm.TeamMembers)
+                console.log(this.tableForm.TeamMembersId)
+                let names = this.tableForm.TeamMembers.split(',')
+                let ids = this.tableForm.TeamMembersId.split(',')
+                let addPeoples = []
+                for (let i = 0; i < ids.length; i++) {
+                    addPeoples.push({
+                        name: names[i],
+                        emplId: ids[i],
+                    })
+                }
+                this.addPeopleNodes = [5]
+                this.nodeList[5].AddPeople = addPeoples
+                $("." + 5).remove()
+                for (let d of addPeoples) {
+                    $("#" + 5).after('<span class="el-tag ' + 5 + '" style="width: 60px; text-align: center; ">' + d.name.substring(0, 4) + '</span >')
+                }
+                return true
+            }
+        },
+        created: function () {
+            this.initEnd(() => { this.getHelpTable() })
+            if (NodeId == 1 && Index != '2') this.noEdit = false
+        }
+    })
+
+</script>
+
+
+

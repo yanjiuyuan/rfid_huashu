@@ -1,0 +1,75 @@
+﻿@{
+    ViewBag.Title = "Home Page";
+}
+
+@RenderPage("~/Views/Shared/LeftMenu.cshtml")
+
+<!--右侧实体内容-->
+<el-main id="mainPage">
+</el-main>
+
+@RenderPage("~/Views/Shared/LeftAnother.cshtml")
+
+
+@section scripts{
+    <script>
+
+        var index = new Vue({
+            el: '#app',
+            mixins: [mixin],
+            data: function () {
+                return {
+                    activeIndex: '1',
+                    scollImages: [],
+                    isCollapse: false,
+                    DingData: DingData,
+                    menuStatus: {
+                        ApproveCount: 0,
+                        MyPostCount: 0,
+                        SendMyCount: 0
+                    },
+                    userName: DingData.nickName
+                }
+            },
+            computed: {
+                menuStatusComputed: function () {
+                    console.log('menuStates')
+                    if (this.DingData)
+                        this.loadMenuData(this.DingData.agentId)
+                    return 1
+                }
+            },
+            methods: {
+                handleOpen(key, keyPath) {
+                    console.log(key, keyPath);
+                },
+                handleClose(key, keyPath) {
+                    console.log(key, keyPath);
+                },
+                //菜单数据加载
+                loadMenuData(id) {
+                    this.GetData("FlowInfoNew/GetFlowStateDetail?Index=1&OnlyReturnCount=true&ApplyManId=" + id, (res) => {
+                        this.menuStatus = res
+                    })
+                }
+            },
+            created: function () {
+                var that = this
+                this.loadMenuData(DingData.userid)
+
+                window.setInterval(function () {
+                    that.userName = DingData.nickName
+                    that.loadMenuData(DingData.userid)
+                }, 5000)
+            }
+        })
+        $("#tempPage").load('/Main/approval')
+
+    </script>
+
+    <style>
+        .el-menu-vertical-demo:not(.el-menu--collapse) {
+            z-index: 666;
+        }
+    </style>
+}

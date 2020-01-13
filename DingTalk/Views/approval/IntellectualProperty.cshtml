@@ -1,0 +1,130 @@
+﻿@{
+    Layout = null;
+}
+
+<!--右侧实体内容-->
+<el-main id="partPage" style="position:relative;">
+    <div class="head-fixed" onclick="loadPage('/Main/approval')">
+        <i class="el-icon-arrow-left"></i>
+        {{FlowName}}-{{nodeInfo.NodeName}}
+    </div>
+    <el-form v-on:submit.native.prevent :model="ruleForm" :rules="rules" ref="ruleForm" label-width="120px" class="demo-ruleForm">
+        @RenderPage("~/Views/Shared/startForm.cshtml")
+        <el-form-item label="项目名称" prop="ProjectId">
+            <el-select v-model="ruleForm.ProjectId" placeholder="请选择" style="width:400px;" v-on:change="selectProject" filterable>
+                <el-option v-for="item in projectList"
+                           :key="item.ProjectId"
+                           :label="item.ProjectId + '-' + item.ProjectName"
+                           :value="item.ProjectId">
+                    <span style="float: left"> {{item.ProjectId}}-{{ item.ProjectName }} </span>
+                    <span style="float: right; color: #8492a6; font-size: 13px"></span>
+                </el-option>
+            </el-select>
+        </el-form-item>
+    </el-form>
+
+    <el-form v-on:submit.native.prevent :model="tableForm" :rules="rules" ref="tableForm" label-width="130px" class="demo-ruleForm"
+             enctype="multipart/form-data">
+        <el-form-item label="申请名称" prop="Name">
+            <sam-input :value.sync="tableForm.Name"></sam-input>
+        </el-form-item>
+        <el-form-item label="申请类别" prop="Type">
+            <el-select v-model="tableForm.Type" style="width:300px;" v-on:change="handleSelete">
+                <el-option v-for="s of ['发明','实用新型','外观','软件著作权']" :label="s" :value="s" key="s"></el-option>
+            </el-select>
+        </el-form-item>
+        <el-form-item label="申请发明人(按贡献度排名)" prop="Inventor">
+            <sam-group :names.sync="tableForm.Inventor" :ids.sync="tableForm.InventorId"></sam-group>
+        </el-form-item>
+    </el-form>
+    <el-form v-on:submit.native.prevent :model="ruleForm" :rules="rules" ref="ruleForm" label-width="120px" class="demo-ruleForm">
+        @RenderPage("~/Views/Shared/startButton.cshtml")
+    </el-form>
+</el-main>
+
+<script>
+    var demo = new Vue({
+        el: "#partPage",
+        mixins: [mixin],
+        data: function () {
+            return {
+                status: status,
+                CompanyNames: CompanyNames,
+                date: _getDate(),
+                addPeopleNodes: [2,5], //额外添加审批人节点数组
+                //阿法迪id
+                //managers: [{
+                //    name: '徐丽华',
+                //    emplId: '0532310824152129'
+                //}, {
+                //    name: '陈思杨',
+                //    emplId: '013623174137759543'
+                //}],
+                //研究院id
+                managers: [{
+                    name: '徐丽华',
+                    emplId: '15543527578095619'
+                }, {
+                    name: '陈思杨',
+                    emplId: '15545554432996107'
+                }],
+
+                tableForm: {
+                    Company: "",
+                    Name: '',
+                    Type: "",
+                    Inventor: "",
+                },
+                rules: {
+                    Company: [{ required: true, message: '申报单位不能为空', trigger: 'blur' }, { min: 0, max: 30, message: '长度在 30 个字符以内', trigger: 'blur' }],
+                    Name: [{ required: true, message: '申请名称不能为空', trigger: 'blur' },{ min: 0, max: 30, message: '长度在 30 个字符以内', trigger: 'blur' }],
+                    Type: [{ required: true, message: '申请类别不能为空', trigger: 'blur' }, { min: 0, max: 30, message: '长度在 30 个字符以内', trigger: 'blur' }],
+                    Inventor: [{ required: true, message: '申请发明人不能为空', trigger: 'blur' }, { min: 0, max: 30, message: '长度在 30 个字符以内', trigger: 'blur' }],
+                }
+            }
+        },
+        methods: {
+            onSubmit(formName) {
+                this.tableForm['Project'] = this.ruleForm.ProjectName
+                this.tableForm['ProjectId'] = this.ruleForm.ProjectId
+                //根据类型添加审批人
+                this.tableForm['Type'] == '软件著作权' ? this.nodeList[5].AddPeople = [this.managers[1]] : this.nodeList[5].AddPeople = [this.managers[0]]
+                let callBack = (taskId) => {
+                    this.tableForm['TaskId'] = taskId
+                    this.PostData('IntellectualProperty/Save', this.tableForm, () => {
+                        this.$alert('恭喜提交成功', '提示信息', {
+                            confirmButtonText: '确定',
+                            callback: action => {
+                                goHome()
+                            }
+                        })
+                    })
+                }
+                this.tableForm.ActualInventor = this.tableForm.Inventor
+                this.tableForm.ActualInventorId = this.tableForm.InventorId
+                this.$refs['tableForm'].validate((valid) => {
+                    if (valid) this.approvalSubmit(callBack)
+                    else {
+                        this.$alert('表单信息不全或有误', '提示信息', {
+                            confirmButtonText: '确定'
+                        })
+                    }
+                })
+            },
+            handleSelete(value) {
+                value == '软件著作权' ? this.nodeList[5].AddPeople = [this.managers[1]] : this.nodeList[5].AddPeople = [this.managers[0]]
+                $("." + 5).remove()
+                $("#" + 5).after('<span class="el-tag ' + 5 + '" style="width: 60px; text-align: center; ">' + this.nodeList[5].AddPeople[0].name + '</span >')
+            }
+        },
+        created: function () {
+            this.initStart()
+        },
+
+    })
+
+
+</script>
+
+
+

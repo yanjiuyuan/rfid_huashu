@@ -1,0 +1,241 @@
+﻿@{
+    Layout = null;
+}
+
+<!--右侧实体内容-->
+<div id="partPage">
+    <!--列表搜索-->
+    <div>
+        <span style="color:red">*</span><span style="padding:3px;">关键字</span>
+        <el-input v-model="searchForm.keyword" placeholder="流水号、标题、申请人" style="width:300px;"></el-input>
+        <el-button type="primary" v-on:click="searchCode">搜索</el-button>
+    </div>
+    <!--表格實體-->
+    <el-table :data="tableData" stripe border
+              v-loading="showLoading"
+              element-loading-text="数据加载中"
+              element-loading-spinner="el-icon-loading"
+              element-loading-background="rgba(0, 0, 0, 0.8)">
+        <el-table-column prop="TaskId" label="流水号" width="100"></el-table-column>
+        <el-table-column prop="FlowName" label="审批类型"></el-table-column>
+        <el-table-column prop="Title" label="标题" width="200"></el-table-column>
+        <el-table-column prop="ApplyMan" label="申请人" width="100"></el-table-column>
+        <el-table-column v-if="Index != '0'" prop="FlowState" label="状态"></el-table-column>
+        <el-table-column prop="ApplyTime" label="申请时间"></el-table-column>
+        <el-table-column prop="CurrentTime" label="最后处理时间"></el-table-column>
+        <el-table-column v-if="Index == 3" prop="State" label="是否已读">
+            <template slot-scope="scope">
+                <span v-if="scope.row.IsRead" class="greenFont">已读</span>
+                <span v-else class="redFont">未读</span>
+            </template>
+        </el-table-column>
+        <el-table-column label="操作">
+            <template slot-scope="scope">
+                <el-button size="mini" v-on:click="handleEdit(scope.$index, scope.row)">详情</el-button>
+                @*<el-button size="mini" type="danger" v-on:click="handleDelete(scope.$index, scope.row)">同意</el-button>*@
+            </template>
+        </el-table-column>
+    </el-table>
+    <!--底部翻頁-->
+    <div style="text-align:right">
+        <el-pagination v-on:size-change="handleSizeChange2"
+                       v-on:current-change="handleCurrentChange2"
+                       :current-page="currentPage"
+                       :page-sizes="[1, 3, 5, 10]"
+                       :page-size="5"
+                       layout="total, sizes, prev, pager, next, jumper"
+                       :total="totalRows">
+        </el-pagination>
+    </div>
+</div>
+
+
+<script>
+    var Index = 0
+    var VUE = new Vue({
+        el: "#partPage",
+        mixins: [mixin],
+        data: function () {
+            return {
+                showLoading: true,
+                data: [],
+                tableData: [],
+                currentPage: 1,
+                totalRows: 0,
+                superSearch: false,
+                Index: UrlObj.Index,
+                bomUrl:'',
+                searchForm: {
+                    keyword: '',
+                },
+                formInline: {
+                    user: '',
+                    region: '',
+                    startDate: '',
+                    endDate: '',
+                    state:0
+                },
+                items: { TaskId: '审批编号' ,ApplyMan:'审批人'}
+            }
+        },
+        methods: {
+            //搜索列表
+            searchCode() {
+                //if (!this.searchForm.keyword) return
+                this.currentPage = 1
+                this.getData2(this.searchForm.keyword)
+            },
+            getData2(keyword) {
+                keyword = this.searchForm.keyword
+                const loading = this.$loading({
+                    lock: true,
+                    text: 'Loading',
+                    spinner: 'el-icon-loading',
+                    background: 'rgba(0, 0, 0, 0.7)'
+                });
+                let param = {
+                    Index: Index,
+                    ApplyManId: DingData.userid,
+                    pageIndex: this.currentPage,
+                    pageSize: this.pageSize
+                }
+                if (keyword) param['Key'] = keyword
+                this.GetData('FlowInfoNew/GetFlowStateDetail' + _formatQueryStr(param), (res,count) => {
+                    console.log(res)
+                    this.showLoading = false
+                    this.tableData = res
+                    this.totalRows = count
+                    loading.close()
+                })
+            },
+            //表单操作
+            handleEdit(index, row) {
+                console.log(index, row);
+                var that = this
+                if (Index == '3') {
+                    var url = '/FlowInfoNew/ChangeSendState?TaskId=' + row.TaskId + '&UserId=' + DingData.userid
+                    this.GetData(url, (res) => {
+                        this.loader(row)
+                    })
+                  
+                } else {
+                    this.loader(row)
+                }
+            },
+            loader(row) {
+                if (row.TaskId && row.FlowId) {
+                    let param = {
+                        taskid: row.TaskId,
+                        flowid: row.FlowId,
+                        flowName: row.FlowName,
+                        nodeid: row.NodeId,
+                        id: row.Id,
+                        index: Index,
+                        state: row.FlowState  
+                    }
+                    if (row.FlowId == 1) {
+                        loadPage('/Main/approval_officeSupplies' + _formatQueryStr(param))
+                        return
+                    }
+                    if (row.FlowId == 7) {
+                        loadPage('/Main/approval_detail2' + _formatQueryStr(param))
+                        return
+                    }
+                    if (row.FlowId == 8) {
+                        loadPage('/Main/approval_purchase' + _formatQueryStr(param))
+                        return
+                    }
+                    if (row.FlowId == 12) {
+                        loadPage('/Main/approval_meterieCode' + _formatQueryStr(param))
+                        return
+                    }
+                    if (row.FlowId == 13) {
+                        loadPage('/Main/approval_usePublicCar' + _formatQueryStr(param))
+                        return
+                    }
+                    if (row.FlowId == 14) {
+                        loadPage('/Main/approval_useCar' + _formatQueryStr(param))
+                        return
+                    }
+                    if (row.FlowId == 17) {
+                        loadPage('/Main/approval_workOvertime' + _formatQueryStr(param))
+                        return
+                    }
+                    if (row.FlowId == 18) {
+                        loadPage('/Main/approval_officePurchase' + _formatQueryStr(param))
+                        return
+                    }
+                    if (row.FlowId == 19) {
+                        loadPage('/Main/approval_sendRead' + _formatQueryStr(param))
+                        return
+                    }
+                    if (row.FlowId == 24) {
+                        loadPage('/Main/approval_gift' + _formatQueryStr(param))
+                        return
+                    }
+                    if (row.FlowId == 26) {
+                        loadPage('/Main/approval_picking' + _formatQueryStr(param))
+                        return
+                    }
+                    if (row.FlowId == 27) {
+                        loadPage('/Main/approval_intoStorage' + _formatQueryStr(param))
+                        return
+                    }
+                    if (row.FlowId == 30) {
+                        loadPage('/Main/approval_goOut' + _formatQueryStr(param))
+                        return
+                    }
+                    if (row.FlowId == 31) {
+                        loadPage('/Main/approval_createProject' + _formatQueryStr(param))
+                        return
+                    }
+                    if (row.FlowId == 32) {
+                        loadPage('/Main/approval_crossHelp' + _formatQueryStr(param))
+                        return
+                    }
+                    if (row.FlowId == 33) {
+                        loadPage('/Main/approval_changePaper' + _formatQueryStr(param))
+                        return
+                    }
+                    if (row.FlowId == 34) {
+                        loadPage('/Main/approval_techonologySupply' + _formatQueryStr(param))
+                        return
+                    }
+                    if (row.FlowId == 35) {
+                        loadPage('/Main/approval_letGoodsGo' + _formatQueryStr(param))
+                        return
+                    }
+                    if (row.FlowId == 36) {
+                        loadPage('/Main/approval_intellectualProperty' + _formatQueryStr(param))
+                        return
+                    }
+                    if (row.FlowId == 67) {
+                        loadPage('/Main/approval_borrowThing' + _formatQueryStr(param))
+                        return
+                    }
+                    if (row.FlowId == 68) {
+                        loadPage('/Main/approval_maintain' + _formatQueryStr(param))
+                        return
+                    }
+                    if (row.FlowId == 69) {
+                        loadPage('/Main/approval_projectClosure' + _formatQueryStr(param))
+                        return
+                    }
+                    loadPage('/Main/approval_detail' + _formatQueryStr(param))
+                }
+            },
+            handleDelete(index, row) {
+                console.log(index, row);
+            }
+        },
+        created: function () {
+            console.log('UrlObj')
+            console.log(UrlObj)
+            Index = UrlObj.Index
+            this.getData2()
+            loadHtml("mainPage", "partPage")
+        }
+    })
+
+
+</script>

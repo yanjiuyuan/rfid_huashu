@@ -1,0 +1,240 @@
+﻿@{
+    Layout = null;
+}
+
+
+<!--右侧实体内容-->
+<el-main id="partPage" style="position:relative;">
+    <div class="head-fixed" onclick="loadPage('/Main/Approval_list')">
+        <i class="el-icon-arrow-left"></i>
+        {{FlowName}}-{{nodeInfo.NodeName}}
+    </div>
+
+    <!--表格實體-->
+    <el-table :data="tableData" stripe border>
+        <el-table-column prop="Count" label="物料名称" width="100">
+            <template slot-scope="scope">
+                <el-input v-if="Index == '0' && NodeId == 2" v-model="scope.row.Name" prop="Name" :class="{ redborder:!scope.row.Name}"></el-input>
+                <span v-else>{{scope.row.Name}}</span>
+            </template>
+        </el-table-column>
+        <el-table-column prop="Count" label="规格型号" width="200">
+            <template slot-scope="scope">
+                <el-input v-if="Index == '0' && NodeId == 2" v-model="scope.row.Standard" prop="Standard" :class="{ redborder:!scope.row.Standard}"></el-input>
+                <span v-else>{{scope.row.Standard}}</span>
+            </template>
+        </el-table-column>
+        <el-table-column prop="Count" label="物料大类编码" width="100">
+            <template slot-scope="scope">
+                <el-input v-if="Index == '0' && NodeId == 2" v-model="scope.row.BigCode" prop="Name" :class="{ redborder:!scope.row.BigCode}"></el-input>
+                <span v-else>{{scope.row.BigCode}}</span>
+            </template>
+        </el-table-column>
+        <el-table-column prop="Count" label="物料小类编码" width="100">
+            <template slot-scope="scope">
+                <el-input v-if="Index == '0' && NodeId == 2" v-model="scope.row.SmallCode" prop="SmallCode" :class="{ redborder:!scope.row.SmallCode}"></el-input>
+                <span v-else>{{scope.row.SmallCode}}</span>
+            </template>
+        </el-table-column>
+        <el-table-column v-for="(value,key) in items" :prop="key" :label="value" :key="key">
+        </el-table-column>
+        <el-table-column label="物料编码" width="100" v-if="NodeId > '0'">
+            <template slot-scope="scope">
+                <el-input v-if="Index == '0' && NodeId == 2" v-model="scope.row.CodeNumber" prop="CodeNumber" :class="{ redborder:!scope.row.CodeNumber}"></el-input>
+                <span v-else>{{scope.row.CodeNumber}}</span>
+            </template>
+        </el-table-column>
+        <el-table-column prop="Price" label="预计价格" width="100" v-if="NodeId > '0'">
+            <template slot-scope="scope">
+                <el-input v-if="Index == '0' && NodeId == 2" v-model="scope.row.FNote"></el-input>
+                <span v-else>{{scope.row.FNote}}</span>
+            </template>
+        </el-table-column>
+    </el-table>
+    <!--底部翻頁-->
+    <div style="text-align:right">
+        <el-pagination v-on:size-change="handleSizeChange"
+                        v-on:current-change="handleCurrentChange"
+                        :current-page="currentPage"
+                        :page-sizes="[1, 3, 5, 10]"
+                        :page-size="5"
+                        layout="total, sizes, prev, pager, next, jumper"
+                        :total="totalRows">
+        </el-pagination>
+    </div>
+
+
+    <el-form v-on:submit.native.prevent :model="ruleForm" :rules="rules" ref="ruleForm" label-width="150px" class="demo-ruleForm"
+             id="uploadForm" enctype="multipart/form-data">
+        @RenderPage("~/Views/Shared/endForm.cshtml")
+        @*<el-form-item label="添加到" v-if="Index == '0' && NodeId == 2">
+            <el-radio v-model="codeType" label="1">零部件</el-radio>
+            <el-radio v-model="codeType" label="2">办公用品</el-radio>
+        </el-form-item>*@
+        <!--图片展示-->
+        <el-form-item v-if="imageList.length > 0" label="相关图片">
+            <el-upload action=""
+                       list-type="picture-card"
+                       :on-preview="handlePictureCardPreview"
+                       :file-list="imageList"
+                       :disabled="true">
+            </el-upload>
+        </el-form-item>
+        <!--相关文件-->
+        <el-form-item v-if="fileList.length > 0" label="相关文件">
+            <el-card class="box-card">
+                <div v-for="f in fileList" :key="f.name" class="text item">
+                    <span>{{ f.name }}</span>
+                    <el-button size="mini" type="primary" v-on:click="downloadFile(f.mediaId)">下载</el-button>
+                </div>
+            </el-card>
+        </el-form-item>
+        <!--添加审批人-->
+        @RenderPage("~/Views/Shared/endButton.cshtml")
+</el-main>
+<script>
+    var taskId = 0
+
+</script>
+
+<script>
+    $("#mask").hide()
+    var dataArr = []
+    var items = {
+        //BigCodeName: '大类名称',
+        //SmallCodeName: '小类名称',
+        //Name: '物料名称',
+        Unit: '单位',
+        SurfaceTreatment: '表面处理',
+        PerformanceLevel: '性能等级',
+        StandardNumber: '标准号',
+        Features: '典型特征',
+        purpose: '用途',
+        Remark: '备注'
+    }
+    var demo = new Vue({
+        el: "#partPage",
+        mixins: [mixin],
+        data: function () {
+            return {
+                items: items,
+                dataArr: dataArr,
+                codeType: '1',
+                ifShowStamppBtn: false,
+                ifShowStamppBtn2: false,
+                frameShow: false
+            }
+        },
+        methods: {
+            //提交审批
+            onSubmit(formName) {
+                console.log('submit!');
+                var that = this
+                if (NodeId == 2) {
+                    let codes = []
+                    for (let d of this.data) {
+                        if (!d.CodeNumber) {
+                            this.$message({ type: 'error', message: '请输入物料编码' })
+                            return
+                        }
+                        if (codes.indexOf(d.CodeNumber) >= 0) {
+                            this.$message({ type: 'error', message: `物料编码不可重复，请重新输入` })
+                            return
+                        }
+                        codes.push(d.CodeNumber)
+                    }
+                    let url = '/ItemCodeAdd/TableModify'
+                    var param = _cloneArr(this.data)
+                    console.log(param)
+                    this._postData(url, function () {
+                        let url2 = '/ItemCodeAdd/InsertPurcahse'
+                        if (that.codeType == '2') url2 = '/ItemCodeAdd/InsertOffice'
+                        let paramArr = []
+                        for (let t of that.data) {
+                            paramArr.push({
+                                "FNumber": t.CodeNumber,
+                                "FName": t.Name,
+                                "FModel": t.Standard,
+                                "FNote": t.FNote
+                            })
+                        }
+                        console.log(paramArr)
+                        that._postData(url2, function () {
+                            that.aggreSubmit()
+                        }, paramArr
+                        )
+                    }, param)
+                }
+                else {
+                    that.aggreSubmit()
+                }
+                
+            },
+
+            //获取bom表信息
+            getBomInfo() {
+                var that = this
+                var bomUrl = "/ItemCodeAdd/GetTable?TaskId=" + TaskId
+                $.ajax({
+                    url: bomUrl,
+                    type: "GET",
+                    success: function (data) {
+                        console.log("获取bom表信息ok")
+                        console.log(bomUrl)
+                        if (typeof (data) == 'string') data = JSON.parse(data)
+                        that.data = data
+                        console.log(data)
+                        if (FlowId == 6) {
+                            for (let a of that.dataArr) {
+                                for (let d of data) {
+                                    if (a.Sorts == d.Sorts) {
+                                        a.data.push(d)
+                                    }
+                                }
+                                a.tableData = a.data.slice(0, 5)
+                                a.totalRows = a.data.length
+                            }
+                        } else {
+                            for (let d of that.data) {
+                                if (d.UrgentDate) d.UrgentDate = d.UrgentDate.substring(0, 10)
+                            }
+                            that.getData()
+                            that.totalRows = that.data.length
+                        }
+
+                    },
+                    error: function (err) {
+                        console.log(err);
+                    }
+                })
+            },
+            //獲取角色信息
+            showStamp(roleName) {
+                var that = this
+                var url = "/Role/GetRoleInfo?RoleName=" + roleName
+                $.ajax({
+                    url: url,
+                    success: function (data) {
+                        console.log("獲取角色信息")
+                        console.log(url)
+                        console.log(data)
+                        if (data[0].emplId == DingData.userid && Index == "3") {
+                            that.ifShowStamppBtn = true
+                            if (FlowId == '8') that.ifShowStamppBtn2 = true
+                        }
+                    }
+                })
+            },
+
+
+        },
+        created: function () {
+            this.initEnd(() => { this.getBomInfo() })
+        }
+    })
+</script>
+
+
+
+
+

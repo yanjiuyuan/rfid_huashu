@@ -1,0 +1,83 @@
+﻿@{
+    Layout = null;
+}
+
+<!--右侧实体内容-->
+<el-main id="partPage" style="position:relative;">
+    <div class="head-fixed" onclick="goHome()">
+        <i class="el-icon-arrow-left"></i>
+        {{FlowName}}-{{nodeInfo.NodeName}}
+    </div>
+
+    <el-form v-on:submit.native.prevent :model="ruleForm" :rules="rules" ref="ruleForm" label-width="120px" class="demo-ruleForm">
+        @RenderPage("~/Views/Shared/endForm.cshtml")
+
+        <div>
+            <el-table :data="data" stripe border>
+                <el-table-column prop="GiftName" label="礼品名称"></el-table-column>
+                <el-table-column prop="GiftCount" label="数量"></el-table-column>
+            </el-table>
+        </div>
+        <!--添加审批人-->
+        @RenderPage("~/Views/Shared/endButton.cshtml")
+        <el-form-item v-if="state=='已完成'">
+            <el-button type="primary" v-on:click="printPdf">打印表单</el-button>
+        </el-form-item>
+    </el-form>
+</el-main>
+
+<script>
+    var demo = new Vue({
+        el: "#partPage",
+        mixins: [mixin],
+        data: function () {
+            return {
+            }
+        },
+        methods: {
+            onSubmit() {
+                if (NodeId == 2) {
+                    this.PostData('Gift/StockReduce', this.data, (res) => {
+                        this.aggreSubmit({
+                            "Id": this.ruleForm.Id,
+                            "Remark": this.ruleForm.Mark
+                        })
+                    })
+                    return
+                }
+                this.aggreSubmit()
+            },
+            printPdf() {
+                var that = this
+                this._getData("/Gift/GetPrintPDF", function (result) {
+                    if (result.errcode != 0) {
+                        that.elementAlert('alert', result.errmsg)
+                    } else {
+                        that.elementAlert('提示信息', '获取成功，请在工作通知中查收')
+                    }
+                },
+                {
+                    UserId: DingData.userid,
+                    TaskId: TaskId
+                }
+                )
+            },
+            getBomInfo() {
+                var that = this
+                this._getData("/Gift/GetTable" , function (result) {
+                    that.data = []
+                    console.log('获取bom表')
+                    console.log(result)
+                    that.data = result.data
+                }, { TaskId: TaskId })
+            }
+        },
+        created: function () {
+            this.initEnd(() => { this.getBomInfo() })
+        }
+    })
+
+</script>
+
+
+

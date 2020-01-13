@@ -1,0 +1,223 @@
+﻿@{
+    Layout = null;
+}
+
+<!--右侧实体内容-->
+<div id="partPage">
+    <!--标题-->
+    <div class="head-fixed" onclick="loadPage('/Main/approval')">
+        <i class="el-icon-arrow-left"></i>
+        角色管理
+    </div>
+
+    <!--表格實體-->
+    <el-table :data="tableData" stripe border>
+        <el-table-column type="index"></el-table-column>
+        <el-table-column prop="RoleName" label="角色名称"></el-table-column>
+        <el-table-column prop="CreateTime" label="创建时间"></el-table-column>
+        <el-table-column prop="IsEnable" label="是否启用"></el-table-column>
+        <el-table-column label="操作" style="width:300px;">
+            <template slot-scope="scope" style="width:300px;">
+                <el-button size="mini" v-on:click="handleEdit(scope.$index, scope.row)">编辑</el-button>
+                @*<el-button size="mini" type="danger" v-on:click="handleDelete(scope.$index, scope.row)">删除</el-button>*@
+            </template>
+        </el-table-column>>
+    </el-table>
+    <!--底部翻頁-->
+    <div style="text-align:right">
+        <el-pagination v-on:size-change="handleSizeChange"
+                       v-on:current-change="handleCurrentChange"
+                       :current-page="currentPage"
+                       :page-sizes="[1, 3, 5, 10]"
+                       :page-size="5"
+                       layout="total, sizes, prev, pager, next, jumper"
+                       :total="totalRows">
+        </el-pagination>
+    </div>
+    <!--编辑项目表单-->
+    <el-dialog title="编辑项目" :visible.sync="dialogFormVisible">
+        <el-form v-on:submit.native.prevent :model="ruleForm" :rules="rules" ref="ruleForm" label-width="100px" class="demo-ruleForm"
+                 enctype="multipart/form-data">
+            <template>
+                <el-form-item label="角色名称">
+                    <sam-input :value.sync="ruleForm.RoleName" placeholder="角色名称"></sam-input>
+                </el-form-item>
+                <el-form-item label="权限成员">
+                    <sam-group :names.sync="ruleForm.UserNames" :ids.sync="ruleForm.UserIds" :onchange="onEditRolemanChange"></sam-group>
+                </el-form-item>
+                <el-form-item label="是否启用">
+                    <el-radio-group v-model="ruleForm.IsEnable">
+                        <el-radio :label="true">是</el-radio>
+                        <el-radio :label="false">否</el-radio>
+                    </el-radio-group>
+                </el-form-item>
+                <el-form-item label="启用成员">
+                    <sam-checkbox :str.sync="ruleForm.IsEnableStr" :arr="ruleForm.IsEnableArr"></sam-checkbox>
+                </el-form-item>
+                <hr />
+                <el-form-item>
+                    <el-button type="primary" v-on:click="editProject('ruleForm')">编辑</el-button>
+                    <el-button v-on:click="dialogFormVisible = false">取 消</el-button>
+                </el-form-item>
+            </template>
+        </el-form>
+    </el-dialog>
+    <!--添加角色表单-->
+    <el-form v-on:submit.native.prevent :model="addForm" class="demo-form-inline" size="medium">
+        <el-form-item label="角色名称">
+            <sam-input :value.sync="addForm.RoleName" placeholder="角色名称" style="width:300px;"></sam-input>
+        </el-form-item>
+        <el-form-item label="权限成员">
+            <sam-group :names.sync="addForm.UserNames" :ids.sync="addForm.UserIds" :onchange="onAddRolemanChange"></sam-group>
+        </el-form-item>
+        <el-form-item label="是否启用">
+            <el-radio-group v-model="addForm.IsEnable">
+                <el-radio :label="true">是</el-radio>
+                <el-radio :label="false">否</el-radio>
+            </el-radio-group>
+        </el-form-item>
+        <el-form-item label="启用成员">
+            <sam-checkbox :str.sync="addForm.IsEnableStr" :arr="addForm.IsEnableArr"></sam-checkbox>
+        </el-form-item>
+        <el-form-item>
+            <el-button type="primary" v-on:click="addRole">添加</el-button>
+        </el-form-item>
+    </el-form>
+</div>
+
+
+<script>
+    var Index = 0
+    var id = ''
+    let initObj = {
+        CreateMan: DingData.nickName,
+        CreateManId: DingData.userid,
+        RoleName: '',
+        UserNames: '',
+        UserIds: '',
+        IsEnable: true,
+        IsEnableArr: [],
+        IsEnableStr: ''
+    }
+    var demo = new Vue({
+        el: "#partPage",
+        mixins: [mixin],
+        data: function () {
+            return {
+                data: [],
+                tableData: [],
+                superSearch: false,
+                nodeInfo: {},
+                addForm: _cloneObj(initObj),
+                ruleForm: _cloneObj(initObj),
+                dialogFormVisible: false,
+            }
+        },
+        methods: {
+            //获取角色数据
+            getRoles() {
+                this.GetData('Role/GetRole?applyManId=' + DingData.userid, (res) => {
+                    this.data = res
+                    this.totalRows = res.length
+                    this.getData()
+                    for (let d of this.tableData) {
+                        d.IsEnable ? d.IsEnable = '是' : d.IsEnable ='否'
+                    }
+                })    
+            },
+            addRole() {
+                let names = this.addForm.UserNames.split(',')
+                let ids = this.addForm.UserIds.split(',')
+                this.addForm['roles'] = []
+                for (let i = 0; i < ids.length; i++) {
+                    this.addForm.roles.push({
+                        CreateMan: DingData.nickName,
+                        CreateManId: DingData.userid,
+                        CreateTime: _getTime(),
+                        UserName: names[i],
+                        UserId: ids[i],
+                        IsEnable: this.addForm.IsEnableStr.indexOf(names[i])>0 ? true : false
+                    })
+                }
+                console.log(JSON.stringify([this.addForm]))
+                this.PostData('Role/AddRole', [this.addForm], (res) => {
+                    this.$message({ type: 'success', message: `添加成功` });
+                    this.getRoles()
+                    this.addForm = _cloneObj(initObj)
+                })
+            },
+            onAddRolemanChange(names, ids) {
+                this.addForm.IsEnableArr = names
+            },
+            onEditRolemanChange(names, ids) {
+                this.ruleForm.IsEnableArr = names
+            },
+            //编辑项目并保存
+            editProject() {
+                let names = this.ruleForm.UserNames.split(',')
+                let ids = this.ruleForm.UserIds.split(',')
+                this.ruleForm['roles'] = []//
+                for (let i = 0; i < ids.length; i++) {
+                    this.ruleForm.roles.push({
+                        RoleId: this.ruleForm.Id,
+                        CreateMan: DingData.nickName,
+                        CreateManId: DingData.userid,
+                        UserName: names[i],
+                        UserId: ids[i],
+                        IsEnable: this.ruleForm.IsEnableStr.indexOf(names[i]) >= 0 ? true : false
+                    })
+                }
+                let param = { applyManId: DingData.userid, roles: [this.ruleForm] }
+                console.log(JSON.stringify(param))
+                this.PostData('Role/ModifyRole', param, (res) => {
+                    this.$message({ type: 'success', message: `修改成功` });
+                    this.getRoles()
+                    this.ruleForm = _cloneObj(initObj)
+                    this.dialogFormVisible = false
+                })
+            },
+            //打开编辑表单
+            handleEdit(index, row) {
+                console.log(index)
+                console.log(row)
+                let names = []
+                let ids = []
+                let ables = []
+                for (let r of row.roles) {
+                    names.push(r.UserName)
+                    ids.push(r.UserId)
+                    if (r.IsEnable)ables.push(r.UserName)
+                }
+                this.ruleForm["Id"] = row.Id
+                this.ruleForm["CreateTime"] = row.CreateTime
+                this.ruleForm["RoleName"] = row.RoleName
+                row.IsEnable == '否' ? this.ruleForm["IsEnable"] = false : this.ruleForm["IsEnable"] = true
+                this.ruleForm.IsEnableArr = names
+                this.ruleForm.UserNames = names.join(',')
+                this.ruleForm.UserIds = ids.join(',')
+                this.ruleForm.IsEnableStr = ables.join(',')
+                console.log()
+                this.dialogFormVisible = true
+                
+            },
+            handleDelete(index, row) {
+                console.log(index, row);
+                this.ruleForm["Id"] = row.Id
+                this.ruleForm['roles'] = []
+                let param = { applyManId: DingData.userid, roles: [this.ruleForm] }
+                console.log(JSON.stringify(param))
+                this.PostData('Role/ModifyRole', param, (res) => {
+                    this.$message({ type: 'success', message: `删除成功` });
+                    this.getRoles()
+                    this.ruleForm = _cloneObj(initObj)
+                })
+            }
+        },
+        created: function () {
+            this.getRoles()
+            loadHtml("mainPage", "partPage")
+        }
+    })
+
+
+</script>

@@ -1,0 +1,103 @@
+﻿@{
+    Layout = null;
+}
+<!--右侧实体内容-->
+<el-main id="partPage" style="position:relative;">
+    <div class="head-fixed" onclick="loadPage('/Main/Approval_list')">
+        <i class="el-icon-arrow-left"></i>
+        {{FlowName}}-{{nodeInfo.NodeName}}
+    </div>
+
+    <!--表格實體-->
+    <el-table :data="tableData" stripe border>
+        <el-table-column v-for="(value,key) in items" :prop="key" :label="value" :key="key">
+        </el-table-column>
+        <el-table-column label="是否删除" width="150" v-if="NodeId >= 3">
+            <template slot-scope="scope">
+                <el-button size="mini" v-if="index == 0 && NodeId == 3" :type="scope.row.IsDelete?'primary':'danger'" v-on:click="setState(scope.$index, scope.row)">{{scope.row.IsDelete?'还原':'删除'}}</el-button>
+                <span :class="{'redFont':scope.row.IsDelete,'greenFont':!scope.row.IsDelete}">{{scope.row.IsDelete?'已删除':'正常'}}</span>
+            </template>
+        </el-table-column>
+    </el-table>
+    <!--底部翻頁-->
+    <div style="text-align:right">
+        <el-pagination v-on:size-change="handleSizeChange"
+                       v-on:current-change="handleCurrentChange"
+                       :current-page="currentPage"
+                       :page-sizes="[1, 3, 5, 10]"
+                       :page-size="5"
+                       layout="total, sizes, prev, pager, next, jumper"
+                       :total="totalRows">
+        </el-pagination>
+    </div>
+    <el-form v-on:submit.native.prevent :model="ruleForm" :rules="rules" ref="ruleForm" label-width="150px" class="demo-ruleForm"
+             id="uploadForm" enctype="multipart/form-data">
+        <el-form-item label="预计总价">
+            <el-input v-model="totalPrice" :disabled="true"></el-input>
+        </el-form-item>
+        @RenderPage("~/Views/Shared/endForm.cshtml")
+        @RenderPage("~/Views/Shared/endButton.cshtml")
+    </el-form>
+
+
+</el-main>
+<script>
+    var items = {
+        CodeNo: '物料编码',
+        Name: '物料名称',
+        Standard: '规格型号',
+        Unit: '单位',
+        Count: '数量',
+        ExpectPrice: '预计单价',
+        Purpose: '用途',
+        Mark: '备注'
+    }
+    var demo = new Vue({
+        el: "#partPage",
+        mixins: [mixin],
+        data: function () {
+            return {
+                items: items,
+            }
+        },
+        methods: {
+            //提交审批
+            onSubmit() {
+                this.disablePage = true
+                if (NodeId == 3) {
+                    this.PostData('/OfficeSupplies/ModifyTable', this.data, (res) => {
+                        this.aggreSubmit()
+                    })
+                    return
+                }
+                this.aggreSubmit()
+            },
+            //获取bom表信息
+            getBomInfo() {
+                var that = this
+                this.GetData("/OfficeSupplies/ReadTable?TaskId=" + TaskId, (data) => {
+                    that.data = data
+                    that.getData()
+                    that.totalRows = that.data.length
+                })
+            },
+            //设置BOM表单状态
+            setState(index, row) {
+                row.IsDelete = !row.IsDelete
+            },
+        },
+        computed: {
+            totalPrice() {
+                let tmpPrice = 0
+                for (let p of this.data) {
+                    if (p.IsDelete) continue
+                    tmpPrice = tmpPrice + p.ExpectPrice * p.Count
+                }
+                return tmpPrice.toFixed(2)
+            }
+        },
+        created: function () {
+            this.initEnd(() => { this.getBomInfo() })
+        }
+    })
+</script>

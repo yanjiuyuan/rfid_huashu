@@ -1,0 +1,368 @@
+﻿@{
+    Layout = null;
+}
+
+<!--右侧实体内容-->
+
+<el-main id="partPage" style="position:relative;margin-left:1%;">
+    <div class="head-fixed" onclick="loadPage('/Main/approval')">
+        <i class="el-icon-arrow-left"></i>
+        {{FlowName}}-{{nodeInfo.NodeName}}
+    </div>
+    <template v-for="(d,index) in dataArr">
+        <!--表格實體-->
+        <el-table :data="d.tableData" stripe border>
+            <el-table-column v-for="(value,key) in d.items" :prop="key" :label="value" :key="key">
+            </el-table-column>
+        </el-table>
+        <!--底部翻頁-->
+        <div style="text-align:right">
+            <el-pagination v-on:current-change="handleBomPageChange($event,index)"
+                           :current-page="d.currentPage"
+                           :page-sizes="[1, 3, 5, 10]"
+                           :page-size="pageSize"
+                           layout="total, prev, pager, next, jumper"
+                           :total="d.totalRows">
+            </el-pagination>
+        </div>
+        <!--上传表單-->
+        @*<el-form-item label="上传excel">*@
+        <el-upload class="upload-demo"
+                   action="/drawingupload/UploadAndGetInfo"
+                   :on-success="handleSuccess"
+                   :before-upload="beforeExcelUpload"
+                   multiple
+                   :limit="1"
+                   :on-exceed="handleExceed"
+                   :file-list="excelList">
+            <el-button size="small" type="primary" v-on:click="bomIndex = index">上传{{d.Sorts}}件</el-button>
+            <div slot="tip" class="el-upload__tip">只能上传excel文件，且不超过4M</div>
+        </el-upload>
+        @*</el-form-item>*@
+    </template>
+    <div style="margin:10px;">
+        <span style="color:red;">下载使用说明书 - > </span><el-button size="mini" type="primary" v-on:click="downloadServerFile(demoUrl)" :disabled="disablePage">下载说明书</el-button>
+        <span style="color:red;">上传所需excel模板 - > </span><el-button size="mini" type="primary" v-on:click="downloadFile(mediaId)" :disabled="disablePage">下载模板</el-button>
+        <p>提示：为了确保信息的准确性，请下载导入模板，并在最新模板上进行修改</p>
+    </div>
+
+    <el-form v-on:submit.native.prevent :model="ruleForm" :rules="rules" ref="ruleForm" label-width="110px" class="demo-ruleForm"
+             id="uploadForm" enctype="multipart/form-data">
+        @RenderPage("~/Views/Shared/startForm.cshtml")
+        <el-form-item label="项目名称" prop="ProjectId">
+            <el-select v-model="ruleForm.ProjectId" placeholder="请选择" style="width:400px;" v-on:change="selectProject" filterable>
+                <el-option v-for="item in projectList"
+                           :key="item.ProjectId"
+                           :label="item.ProjectName"
+                           :value="item.ProjectId">
+                    <span style="float: left">{{item.ProjectId}}-{{ item.ProjectName }}</span>
+                    <span style="float: right; color: #8492a6; font-size: 13px"></span>
+                </el-option>
+            </el-select>
+        </el-form-item>
+        <el-form-item label="图纸用途" required="required" prop="ProjectType">
+            <el-select v-model="ruleForm.ProjectType">
+                <el-option v-for="s of ProjectTypes" :label="s" :value="s" key="s"></el-option>
+            </el-select>
+        </el-form-item>
+        <el-form-item label="图纸设计人员" prop="tpName">
+            <el-input v-model="ruleForm.tpName" style="width:500px;" :disabled="true"></el-input>
+            <el-button class="button-new-tag" size="small" v-on:click="addPeerNumber()">+ 选人</el-button>
+        </el-form-item>
+
+        <el-form-item label="上传图片">
+            <el-upload action="/drawingupload/Upload"
+                       list-type="picture-card"
+                       :file-list="imageList"
+                       :on-preview="handlePictureCardPreview"
+                       :on-remove="handlePictureRemove"
+                       :on-success="handlePictureCardSuccess"
+                       :before-upload="beforePictureUpload">
+                <i class="el-icon-plus"></i>
+            </el-upload>
+            <el-dialog :visible.sync="dialogVisible">
+                <img width="100%" :src="dialogImageUrl" alt="">
+            </el-dialog>
+        </el-form-item>
+
+        <el-form-item label="上传PDF图纸" required="required" prop="FilePDFUrl">
+            <el-upload class="upload-demo"
+                       drag
+                       :file-list="pdfList"
+                       action="/drawingupload/Upload"
+                       :on-remove="HandlePdfFileRemove"
+                       :before-upload="beforePdfFileUpload"
+                       :on-success="handlePdfFileSuccess"
+                       multiple>
+                <i class="el-icon-upload"></i>
+                <div class="el-upload__text">将文件拖到此处，或<em>点击上传</em></div>
+                <div class="el-upload__tip" slot="tip">单个文件不超过9M</div>
+            </el-upload>
+        </el-form-item>
+
+        <el-form-item label="上传其他附件" required="required" prop="FileUrl">
+            <el-upload class="upload-demo"
+                       drag
+                       :file-list="fileList"
+                       action="/drawingupload/Upload"
+                       :on-remove="HandleFileRemove"
+                       :before-upload="BeforeFileUpload"
+                       :on-success="HandleFileSuccess" :on-exceed="HandleFileExceed"
+                       multiple>
+                <i class="el-icon-upload"></i>
+                <div class="el-upload__text">上传excelBom表、3D文件 --><em>点击上传</em></div>
+                <div class="el-upload__tip" slot="tip">单个文件不超过9M</div>
+            </el-upload>
+        </el-form-item>
+        @RenderPage("~/Views/Shared/startButton.cshtml")
+    </el-form>
+</el-main>
+
+<script>
+    var mediaId = '@@lAvPBY0V47H4Ai_OIqLuUc5MMPmu'
+    var demoUrl = '~/UploadFile/Flies/图纸审批使用教程V1.0.docx'
+    var upBom = []
+    var demo = new Vue({
+        el: "#partPage",
+        mixins: [mixin],
+        data: function () {
+            return {
+                mediaId: mediaId,
+                demoUrl: demoUrl,
+                tableData: [],
+                specialRole: [],
+                specialRoleNames: [],
+                imageList: [],
+
+                bomIndex: 0,
+                dataArr: [
+                    {
+                        data: [],
+                        tableData: [],
+                        Sorts: '标准',
+                        currentPage: 1,
+                        totalRows: 0,
+                        items: {}
+                    },
+                    {
+                        data: [],
+                        tableData: [],
+                        Sorts: '自制',
+                        currentPage: 1,
+                        totalRows: 0,
+                        items: {}
+                    },
+                    {
+                        data: [],
+                        tableData: [],
+                        Sorts: '外购',
+                        currentPage: 1,
+                        totalRows: 0,
+                        items: {}
+                    }],
+                ProjectTypes: ['电气采购', '机械加工', '机械采购', '其他'],
+                //图片上传参数
+                dialogImageUrl: '',
+                dialogVisible: false,
+            }
+        },
+        methods: {
+            //提交审批
+            onSubmit(formName) {
+                //this.ruleForm.counts = JSON.stringify({ Designer: DingData.nickName, DesignerId: DingData.userid })
+                this.approvalSubmit(this.bindData)
+            },
+            //审批绑定BOM表数据
+            bindData(taskId) {
+                for (let d of upBom) {
+                    d.TaskId = taskId
+                }
+                var that = this
+                $.ajax({
+                    url: "/DrawingUpload/LoadPurchase",
+                    type: "POST",
+                    dataType: "json",
+                    data: JSON.stringify(upBom),
+                    success: function (data) {
+                        console.log("审批绑定BOM表数据ok")
+                        console.log(upBom)
+                        console.log(data)
+                        that.doneSubmit()
+                    },
+                    error: function (XMLHttpRequest, textStatus, errorThrown) {
+                        console.log(XMLHttpRequest.status);
+                    }
+                })
+            },
+            //添加图纸审计人员
+            addPeerNumber() {
+                var that = this
+                DingTalkPC.biz.contact.choose({
+                    users: [],
+                    multiple: false,
+                    corpId: DingData.CorpId,
+                    max: 10,
+                    onSuccess: function (data) {
+                        console.log(data)
+                        let d = data[0]
+                        that.ruleForm.tpName = d.name
+                        that.ruleForm.counts = JSON.stringify({ Designer: d.name, DesignerId: d.emplId })
+                    },
+                    onFail: function (err) { }
+                });
+            },
+            handleSuccess(response, file, fileList) {
+                console.log(response)
+                var tableData = response[0].Value
+                this.currentPage = 1
+                let BomId = ''
+                if (!(tableData && tableData.length > 0)) return
+                this.data = []
+                let count = 0
+                for (let i = 0; i < tableData.length; i++) {
+                    let data = tableData[i]
+                    if (i == 0) {
+                        this.items = {}
+                        for (let c in data) {
+                            if (c.substring(0, 6) == 'Column') {
+                                this.items[c] = data[c]
+                                this.dataArr[this.bomIndex].items[c] = data[c]
+                            }
+                            else if (c.length > 10) {
+                                this.dataArr[this.bomIndex]['BomId'] = c
+                                BomId = c
+                            }
+                        }
+                    } else {
+                        if (data['Column1'] && data['Column1'] != "") {
+                            this.dataArr[this.bomIndex].data.push(data)
+                            this.data.push(data)
+                            count++ 
+                            upBom.push({
+                                BomId: BomId,
+                                DrawingNo: data.Column1,
+                                Name: data.Column2,
+                                Count: data.Column3,
+                                MaterialScience: data.Column4,
+                                Unit: data.Column5,
+                                SingleWeight: data.Column6,
+                                AllWeight: data.Column7,
+                                NeedTime: data.Column8,
+                                Mark: data.Column9,
+                                Sorts: this.dataArr[this.bomIndex].Sorts
+                            })
+                        } 
+                    }
+                }
+                if (!count)
+                {
+                    this.$message({ type: 'error', message: `请上传正确格式文件` });
+                    return
+                }
+                //this.totalRows = this.data.length
+                this.dataArr[this.bomIndex].totalRows = this.dataArr[this.bomIndex].data.length
+                this.getData()
+                this.dataArr[this.bomIndex].tableData = this.tableData
+            },
+            handleExceed(files, fileList) {
+                this.$message.warning(`当前限制选择 1 个文件，本次选择了 ${files.length} 个文件，共选择了 ${files.length + fileList.length} 个文件`);
+            },
+            //bom表格翻页
+            handleBomPageChange(page, index) {
+                console.log(page)
+                console.log(index)
+                this.data = this.dataArr[index].data
+                this.currentPage = page
+                this.dataArr[index].currentPage = page
+                this.getData()
+                this.dataArr[index].tableData = _cloneArr(this.tableData)
+            },
+            
+            //加载重新发起审批传递的数据
+            loadReApprovalData() {
+                if (!ReApprovalTempData.valid) return
+                console.log('加载重新发起审批传递的数据')
+                console.log(ReApprovalTempData)
+                this.ruleForm = ReApprovalTempData.ruleForm
+                this.imageList = ReApprovalTempData.imageList
+                this.fileList = ReApprovalTempData.fileList
+                this.pdfList = ReApprovalTempData.pdfList
+                this.data = ReApprovalTempData.data
+                var preUrl = 'http://' + window.location.host
+                for (let f of this.fileList) {
+                    f["response"] = {
+                        Content: f.url.replace(preUrl,'~')
+                    }
+                }
+                for (let p of this.pdfList) {
+                    p["response"] = {
+                        Content: p.url.replace(preUrl, '~')
+                    }
+                }
+                this.dataArr = ReApprovalTempData.dataArr
+                this.items = ReApprovalTempData.items
+                ReApprovalTempData.valid = false
+                upBom = []
+                for (let a of this.dataArr) {
+                    let bomArr = _cloneArr(a.data)
+                    a.tableData = a.data.slice(0, 5)
+                    a.totalRows = a.data.length
+                    a.items = this.items
+                    upBom = upBom.concat(bomArr)
+                }
+            },
+            //加载临时保存
+            loadTempData() {
+                for (let p of slParam) {
+                    let data = this.loadData(FlowId + '-' + p)
+                    if (getLocalObj(FlowId + '-' + p)) {
+                        data = getLocalObj(FlowId + '-' + p)
+                    }
+                    if (data) {
+                        this[p] = data
+                        this.saveData(p, null)
+                    }
+                }
+                localStorage.clear()
+                if (!this.dataArr) return
+                upBom = []
+                for (let a of this.dataArr) {
+                    for (let data of a.data) {
+                        upBom.push({
+                            BomId: a.BomId,
+                            DrawingNo: data.Column1,
+                            Name: data.Column2,
+                            Count: data.Column3,
+                            MaterialScience: data.Column4,
+                            Unit: data.Column5,
+                            SingleWeight: data.Column6,
+                            AllWeight: data.Column7,
+                            NeedTime: data.Column8,
+                            Mark: data.Column9,
+                            Sorts: a.Sorts
+                        })
+                    }
+                    a.tableData = a.data.slice(0, 5)
+                    a.totalRows = a.data.length
+                    a.items = this.items
+                }
+            },
+        },
+        created: function () {
+            for (let s of this.specialRoles) {
+                this.specialRoleNames.push(s.name)
+                this.getSpecialRoleInfo(s.name)
+            }
+            this.initStart((res) => {
+            })
+        }
+    })
+
+</script>
+
+<style>
+    .upload-demo{
+        width:400px;
+    }
+</style>
+

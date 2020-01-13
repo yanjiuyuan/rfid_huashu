@@ -1,0 +1,188 @@
+﻿@{
+    Layout = null;
+}
+
+<!--右侧实体内容-->
+<el-main id="partPage" style="margin-top:20px;">
+    <br />
+    <template v-if="userName == '蔡兴桐' || userName == '黄浩炜' || userName == '詹姆斯' || userName == '黄浩伟' || userName == '黄龙贤' || userName == '胡晓辉' || userName == '林淑珍' || userName == '徐丽华' || userName == '陈思扬'|| userName == '许瑜瑜'">
+        <span>我是：</span>
+        <el-select v-model="userName" v-on:change="selectUser" filterable placeholder="请选择">
+            <el-option v-for="item in userList"
+                       :key="item.PeopleId"
+                       :label="item.NodePeople"
+                       :value="item.PeopleId">
+            </el-option>
+        </el-select>
+        <p>{{name}}</p>
+        <p>{{id}}</p>
+        <el-button class="button-new-tag" size="small" v-on:click="addMemberTest()">+ 选人</el-button>
+        @*<el-button class="button-new-tag" size="small" v-on:click="test">钉盘</el-button> *@
+    </template>
+    <el-collapse v-model="activeNames">
+        <el-collapse-item v-for="(m,i) in menu" :name="i+1" :key="i">
+            <template slot="title">
+                <span style="font-size:20px;">{{m.SORT_NAME}}</span>
+            </template>
+            <div v-for="l in m.flows" v-if="l.PcUrl" class="approval-box" v-on:click="toApprove(l.PcUrl,l)" style="cursor:pointer;">
+                <div class="approval-box-img" :style="{backgroundPosition:l.Position}"></div>
+                <p>{{l.FlowName}}</p>
+            </div>
+        </el-collapse-item>
+    </el-collapse>
+</el-main>
+
+<script>
+    var demo = new Vue({
+        el: "#partPage",
+        mixins: [mixin],
+        data: function () {
+            return {
+                activeNames: [1,2,3,7],
+                count: 2,
+                name: '',
+                id: '',
+                list: [],
+                userList: userList,
+                userName: DingData.nickName
+            }
+        },
+        methods: {
+            test: function () {
+                dd.biz.util.uploadAttachment({
+                    image: { multiple: true, compress: false, max: 9, spaceId: "2194424840" },
+                    space: { corpId: DingData.CorpId, spaceId: "2194424840", isCopy: 1, max: 9 },
+                    file: { spaceId: "2194424840", max: 1 },
+                    types: ["photo", "file", "space"],//PC端支持["photo","file","space"]
+                    onSuccess: function (result) {
+                        console.log(JSON.stringify(result))
+                    },
+                    onFail: function (err) { }
+                });
+            },
+            getMenu: function () {
+                this.GetData('FlowInfoNew/LoadFlowSort?DEPT_ID=ALL&userid=' + DingData.userid, (res) => {
+                    res = JSON.stringify(res).replace(/null/g, '""')
+                    this.menu = JSON.parse(res)
+                    menu = JSON.parse(res)
+                })
+            },
+            filterMenuList() {
+                var that = this
+                var url = '/Role/GetRoleInfo?RoleName=研究院官网维护人员' 
+                $.ajax({
+                    url: url,
+                    success: function (data) {
+                        console.log(data)
+                        let isRole = false
+                        for (let d of data) {
+                            console.log(d)
+                            if (d.emplId == DingData.userid) {
+                                isRole = true
+                                break
+                            }
+                        }
+                        if (!isRole) {
+                            for (var i = 0; i < that.menu.length; i++) {
+                                if (that.menu[i].SORT_NAME == '研究院官网管理') {
+                                    that.menu.splice(i, 1)
+                                }
+                            }
+                        }
+                    }
+                })
+                var url2 = '/Role/GetRoleInfo?RoleName=项目管理员'
+                $.ajax({
+                    url: url2,
+                    success: function (data) {
+                        console.log(data)
+                        let isRole = false
+                        for (let d of data) {
+                            console.log(d)
+                            if (d.emplId == DingData.userid) {
+                                isRole = true
+                                break
+                            }
+                        }
+                        if (!isRole) {
+                            for (var i = 0; i < that.list.length; i++) {
+                                if (that.list[i].FlowId == 11 && that.userName != '黄浩炜') {
+                                    that.list.splice(i, 1)
+                                }
+                            }
+                        }
+                    }
+                })
+            },
+            addMemberTest() {
+                var that = this
+
+                DingTalkPC.biz.contact.choose({
+                    users: [], //默认选中的用户列表，员工userid；成功回调中应包含该信息
+                    corpId: DingData.CorpId, //企业id
+                    max: 10, //人数限制，当multiple为true才生效，可选范围1-1500
+                    onSuccess: function (data) {
+                        console.log(data)
+                        that.name = data[0].name
+                        that.id = data[0].emplId
+                        DingData.userid = data[0].emplId
+                        DingData.nickName = data[0].name
+
+                        $.ajax({
+                            url: '/DingTalkServers/getUserDetail?userId=' + DingData.userid,
+                            dataType: 'json',
+                            type: 'POST',
+                            data: {},
+                            contentType: "application/json; charset=utf-8",
+                            success: function (data) {
+                                if (typeof (data) == 'string') data = JSON.parse(data)
+                                DingData.nickName = data.name
+                                DingData.department = data.department
+                                DingData.dept = data.dept
+                            },
+                            error: function (err) {
+                                console.error(err)
+                            }
+                        })
+                    },
+                    onFail: function (err) { }
+                });
+            },
+            toApprove: function (url, param) {
+                FlowId = param.FlowId
+                FlowName = param.FlowName
+                loadPage(url)
+            },
+            loadPage: function (url) {
+                $("#tempPage").load(url)
+            },
+            selectUser: function (id) {
+                console.log(id)
+                for (var user of this.userList) {
+                    if (user.PeopleId == id) {
+                        DingData.userid = user.PeopleId
+                        DingData.nickName = user.NodePeople
+                    }
+                }
+            },
+            getUserInfo: function () {
+                this.GetData("FlowInfoNew/GetUserInfo", (res) => {
+                    this.userList = res
+                })
+            }
+        },
+        created: function () {
+            var that = this
+            var node = document.getElementById('content');
+            var intval = window.setInterval(function () {
+                if (DingData.userid) {
+                    that.getMenu()
+                    clearInterval(intval)
+                }
+            },200)
+            this.getUserInfo()
+            loadHtml("mainPage", "partPage")
+        }
+    })
+
+</script>

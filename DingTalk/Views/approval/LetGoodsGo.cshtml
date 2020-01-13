@@ -1,0 +1,145 @@
+﻿@{
+    Layout = null;
+}
+
+<!--右侧实体内容-->
+<el-main id="partPage" style="position:relative;">
+    <div class="head-fixed" onclick="loadPage('/Main/approval')">
+        <i class="el-icon-arrow-left"></i>
+        {{FlowName}}-{{nodeInfo.NodeName}}
+    </div>
+    <el-form v-on:submit.native.prevent :model="ruleForm" :rules="rules" ref="ruleForm" label-width="120px" class="demo-ruleForm">
+        @RenderPage("~/Views/Shared/startForm.cshtml")
+    </el-form>
+    <el-form v-on:submit.native.prevent :model="tableForm" :rules="rules" ref="tableForm" label-width="130px" class="demo-ruleForm"
+             enctype="multipart/form-data">
+        <el-form-item label="单位名称" prop="Company">
+            <el-select v-model="tableForm.Company" style="width:400px;">
+                <el-option v-for="item in CompanyNames"
+                           :key="item"
+                           :label="item"
+                           :value="item">
+                </el-option>
+            </el-select>
+        </el-form-item>
+        <el-form-item label="车牌号">
+            <sam-input :value.sync="tableForm.CarNo"></sam-input>
+        </el-form-item>
+        <el-form-item label="联系方式" prop="Tel">
+            <sam-input :value.sync="tableForm.Tel" :required="true"></sam-input>
+        </el-form-item>
+        <el-form-item label="物品名称" prop="Name">
+            <sam-input :value.sync="tableForm.Name" :required="true"></sam-input>
+        </el-form-item>
+        <el-form-item label="数量" prop="Count">
+            <sam-input :value.sync="tableForm.Count" :required="true" type="number"></sam-input>
+        </el-form-item>
+        <el-form-item label="单位" prop="Unit">
+            <sam-input :value.sync="tableForm.Unit" :required="true"></sam-input>
+        </el-form-item>
+        <el-form-item label="放行理由" prop="Cause">
+            <sam-input :value.sync="tableForm.Cause" :required="true" :maxlength="100" type="textarea"></sam-input>
+        </el-form-item>
+        <el-form-item label="放行日期" prop="Date">
+            <el-date-picker v-model="tableForm.Date"
+                            type="date" :ediTable="false"
+                            value-format="yyyy-MM-dd"
+                            @*v-on:change="selectTime"*@
+                            placeholder="选择日期">
+            </el-date-picker>
+        </el-form-item>
+    </el-form>
+    <el-form v-on:submit.native.prevent :model="ruleForm" :rules="rules" ref="ruleForm" label-width="120px" class="demo-ruleForm">
+        <el-form-item label="上传图片" required="required">
+            <el-upload action="/drawingupload/Upload"
+                       list-type="picture-card"
+                       :file-list="imageList"
+                       :on-preview="handlePictureCardPreview"
+                       :on-remove="handlePictureRemove"
+                       :on-success="handlePictureCardSuccess"
+                       :before-upload="beforePictureUpload">
+                <i class="el-icon-plus"></i>
+            </el-upload>
+            <el-dialog :visible.sync="dialogVisible">
+                <img width="100%" :src="dialogImageUrl" alt="">
+            </el-dialog>
+        </el-form-item>
+        @RenderPage("~/Views/Shared/startButton.cshtml")
+    </el-form>
+</el-main>
+
+<script>
+    var demo = new Vue({
+        el: "#partPage",
+        mixins: [mixin],
+        data: function () {
+            return {
+                CompanyNames: CompanyNames,
+                date: _getDate(),
+                addPeopleNodes: [1], //额外添加审批人节点数组
+                //图片上传参数
+                dialogImageUrl: '',
+                dialogVisible: false,
+                tableForm: {
+                    CarNo: "",
+                    Company: '泉州华中科技大学智能制造研究院',
+                    Tel: "",
+                    Name: "",
+                    Count: "",
+                    Unit: "",
+                    Cause: "",
+                    Date: "",
+                    OldImageUrl: '',
+                },
+                rules: {
+                    Company: commonInput,
+                    Tel: commonInput,
+                    Name: commonInput,
+                    Count: commonInput,
+                    Unit: commonInput,
+                    Cause: [{ required: true, message: '该项不能为空', trigger: 'blur' }, { min: 0, max: 100, message: '长度在 100 个字符以内', trigger: 'blur' }],
+                    Date: commonInput,
+                    ImageUrl: { required: true, message: '该项不能为空', trigger: 'blur' }
+                }
+            }
+        },
+        methods: {
+            onSubmit(formName) {
+                //console.log(this.ruleForm)
+                //return
+                if (this.imageList.length == 0) {
+                    this.elementAlert('提示', '未上传图片，请先上传后提交')
+                    return
+                }
+                let callBack = (taskId) => {
+                    this.tableForm['TaskId'] = taskId
+                    this.PostData('MaterialRelease/Save', this.tableForm, () => {
+                        this.$alert('恭喜提交成功', '提示信息', {
+                            confirmButtonText: '确定',
+                            callback: action => {
+                                goHome()
+                            }
+                        })
+                    })
+                }
+                this.$refs['tableForm'].validate((valid) => {
+                    if (valid) {
+                        this.approvalSubmit(callBack)
+                    }
+                    else {
+                        this.$alert('表单信息不全或有误', '提示信息', {
+                            confirmButtonText: '确定'
+                        })
+                    }
+                })
+                //this.approvalSubmit(callBack)
+            }
+        },
+        created: function () {
+            this.initStart()
+        },
+    })
+</script>
+
+
+
