@@ -133,19 +133,20 @@
                         index: Index,
                         state: row.FlowState  
                     }
-                    if (row.FlowId == 1) {
-                        loadPage('/Main/approval_officeSupplies' + _formatQueryStr(param))
+                    if (row.FlowId == 24) {
+                        loadPage('/Main/approval_purchase' + _formatQueryStr(param))
                         return
                     }
+                    if (row.FlowId == 26) {
+                        loadPage('/Main/approval_finishedPurchase' + _formatQueryStr(param))
+                        return
+                    }
+
                     if (row.FlowId == 7) {
                         loadPage('/Main/approval_detail2' + _formatQueryStr(param))
                         return
                     }
                     if (row.FlowId == 8) {
-                        loadPage('/Main/approval_purchase' + _formatQueryStr(param))
-                        return
-                    }
-                    if (row.FlowId == 12) {
                         loadPage('/Main/approval_meterieCode' + _formatQueryStr(param))
                         return
                     }
@@ -169,11 +170,7 @@
                         loadPage('/Main/approval_sendRead' + _formatQueryStr(param))
                         return
                     }
-                    if (row.FlowId == 24) {
-                        loadPage('/Main/approval_gift' + _formatQueryStr(param))
-                        return
-                    }
-                    if (row.FlowId == 26) {
+                    if (row.FlowId == 28) {
                         loadPage('/Main/approval_picking' + _formatQueryStr(param))
                         return
                     }
@@ -181,32 +178,12 @@
                         loadPage('/Main/approval_intoStorage' + _formatQueryStr(param))
                         return
                     }
-                    if (row.FlowId == 30) {
-                        loadPage('/Main/approval_goOut' + _formatQueryStr(param))
-                        return
-                    }
                     if (row.FlowId == 31) {
                         loadPage('/Main/approval_createProject' + _formatQueryStr(param))
                         return
                     }
-                    if (row.FlowId == 32) {
-                        loadPage('/Main/approval_crossHelp' + _formatQueryStr(param))
-                        return
-                    }
                     if (row.FlowId == 33) {
                         loadPage('/Main/approval_changePaper' + _formatQueryStr(param))
-                        return
-                    }
-                    if (row.FlowId == 34) {
-                        loadPage('/Main/approval_techonologySupply' + _formatQueryStr(param))
-                        return
-                    }
-                    if (row.FlowId == 35) {
-                        loadPage('/Main/approval_letGoodsGo' + _formatQueryStr(param))
-                        return
-                    }
-                    if (row.FlowId == 36) {
-                        loadPage('/Main/approval_intellectualProperty' + _formatQueryStr(param))
                         return
                     }
                     if (row.FlowId == 67) {
@@ -215,10 +192,6 @@
                     }
                     if (row.FlowId == 68) {
                         loadPage('/Main/approval_maintain' + _formatQueryStr(param))
-                        return
-                    }
-                    if (row.FlowId == 69) {
-                        loadPage('/Main/approval_projectClosure' + _formatQueryStr(param))
                         return
                     }
                     loadPage('/Main/approval_detail' + _formatQueryStr(param))

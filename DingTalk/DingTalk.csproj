@@ -835,12 +835,6 @@
     <WCFMetadata Include="Connected Services\" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Views\approval\UseCar.cshtml" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="Views\approval\WorkOvertime.cshtml" />
-  </ItemGroup>
-  <ItemGroup>
     <Content Include="DingTalkAddressConfig.json" />
   </ItemGroup>
   <ItemGroup>
@@ -849,8 +843,6 @@
   <ItemGroup>
     <Content Include="Views\Main\Approval_list.cshtml" />
     <Content Include="Views\Main\Index.cshtml" />
-    <Content Include="Views\Main\VoteDetail.cshtml" />
-    <Content Include="Views\Main\VoteList.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="JqueryUI\colorpicker-master\bower.json" />
@@ -879,45 +871,21 @@
     <Content Include="Views\approval\AddProject.cshtml" />
     <Content Include="SwaggerUI\lib\.DS_Store" />
     <Content Include="Views\approval\AddMaterielCode.cshtml" />
-    <Content Include="Views\approval\UsePublicCar.cshtml" />
-    <Content Include="Views\approval\CarManager.cshtml" />
-    <Content Include="Views\Main\Approval_usePublicCar.cshtml" />
-    <Content Include="Views\Main\Approval_useCar.cshtml" />
-    <Content Include="Views\approval\Vote.cshtml" />
     <Content Include="Views\Main\Approval_meterieCode.cshtml" />
-    <Content Include="Views\Main\Approval_workOvertime.cshtml" />
     <Content Include="Views\Main\Approval_officePurchase.cshtml" />
-    <Content Include="Views\approval\SendRead.cshtml" />
-    <Content Include="Views\Main\Approval_sendRead.cshtml" />
-    <Content Include="Views\approval\PublishNew.cshtml" />
     <Content Include="Views\approval\OfficePurchase.cshtml" />
     <Content Include="Views\approval\officeSupplies.cshtml" />
     <Content Include="Views\approval\Purchase.cshtml" />
     <Content Include="UploadFile\Excel\Templet\采购导出模板.xlsx" />
-    <Content Include="Views\approval\PublishProduct.cshtml" />
-    <Content Include="Views\approval\PublishRecruit.cshtml" />
     <Content Include="Views\approval\UploadPaperRe.cshtml" />
-    <Content Include="Views\approval\Gift.cshtml" />
-    <Content Include="Views\Main\Approval_gift.cshtml" />
-    <Content Include="Views\approval\UploadPic.cshtml" />
     <Content Include="Views\approval\Picking.cshtml" />
     <Content Include="Views\approval\IntoStorage.cshtml" />
     <Content Include="Views\Main\Approval_picking.cshtml" />
     <Content Include="Views\Main\Approval_intoStorage.cshtml" />
-    <Content Include="Views\Main\Approval_goOut.cshtml" />
-    <Content Include="Views\approval\GoOut.cshtml" />
     <Content Include="Views\approval\CreateProject.cshtml" />
     <Content Include="Views\Main\Approval_createProject.cshtml" />
-    <Content Include="Views\approval\CrossHelp.cshtml" />
-    <Content Include="Views\Main\Approval_crossHelp.cshtml" />
-    <Content Include="Views\approval\TechonologySupply.cshtml" />
-    <Content Include="Views\Main\Approval_techonologySupply.cshtml" />
     <Content Include="Views\approval\ChangePaper.cshtml" />
     <Content Include="Views\Main\Approval_changePaper.cshtml" />
-    <Content Include="Views\approval\LetGoodsGo.cshtml" />
-    <Content Include="Views\Main\Approval_letGoodsGo.cshtml" />
-    <Content Include="Views\approval\IntellectualProperty.cshtml" />
-    <Content Include="Views\Main\Approval_intellectualProperty.cshtml" />
     <Content Include="Views\approval\PickingManager.cshtml" />
     <Content Include="Views\approval\BorrowThing.cshtml" />
     <Content Include="Views\approval\Maintain.cshtml" />
@@ -925,9 +893,6 @@
     <Content Include="Views\Main\Approval_maintain.cshtml" />
     <Content Include="Views\Register\List.cshtml" />
     <Content Include="Views\Register\flowInformation.cshtml" />
-    <Content Include="Views\approval\ProjectClosure.cshtml" />
-    <Content Include="Views\Main\Approval_projectClosure.cshtml" />
-    <Content Include="Views\approval\ProduceRate.cshtml" />
     <Content Include="Views\Register\addFlow.cshtml" />
     <Content Include="Views\Main\Approval_officeSupplies.cshtml" />
     <Content Include="Views\Main\Approval_purchase.cshtml" />
@@ -938,7 +903,9 @@
     <Content Include="Views\approval\FlowEdit.cshtml" />
     <Content Include="Views\approval\logManager.cshtml" />
     <Content Include="Views\approval\RoleEdit.cshtml" />
-    <Content Include="Views\approval\up.cshtml" />
+    <Content Include="Views\approval\FinishedPurchase.cshtml" />
+    <Content Include="Views\Main\Approval_finishedPurchase.cshtml" />
+    <Content Include="Views\approval\ContractManager.cshtml" />
     <None Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
     </None>
