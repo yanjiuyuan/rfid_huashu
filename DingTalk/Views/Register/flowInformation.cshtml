@@ -186,14 +186,18 @@
     <el-form v-on:submit.native.prevent :model="ruleForm" :rules="rules" ref="ruleForm" label-width="100px" class="demo-ruleForm"
              id="uploadForm" enctype="multipart/form-data">
         <el-form-item label="流程名称" prop="FlowName">
-            <el-input v-model="ruleForm.FlowName"></el-input>
+            <sam-input :value.sync="ruleForm.FlowName" style="width:600px;" :maxlength="8"></sam-input>
         </el-form-item>
-        <el-form-item label="流程Id" prop="FlowId">
+        @*<el-form-item label="流程Id" prop="FlowId">
             <el-input v-model="ruleForm.FlowId"></el-input>
-        </el-form-item>
+        </el-form-item>*@
 
         <el-form-item label="PC页面路径" prop="PcUrl">
             <el-input v-model="ruleForm.PcUrl"></el-input>
+        </el-form-item>
+
+        <el-form-item label="移动端页面路径">
+            <el-input v-model="ruleForm.PhoneUrl"></el-input>
         </el-form-item>
         <el-form-item label="是否启用" prop="IsEnable">
             <el-radio-group v-model="ruleForm.IsEnable">
@@ -213,6 +217,11 @@
                 <el-radio :label="false">否</el-radio>
             </el-radio-group>
         </el-form-item>
+        <template v-if="ruleForm.IsSupportMobile">
+            <el-form-item label="移动端通知路径">
+                <el-input v-model="ruleForm.ApproveUrl"></el-input>
+            </el-form-item>
+        </template>
         <el-form-item label="权限成员(默认全部)">
             <el-tag :key="tag.emplId" v-for="tag in groupPeople" closable
                     :disable-transitions="false" v-on:close="handleClose(tag)">
@@ -220,17 +229,10 @@
             </el-tag>
             <el-button class="button-new-tag" size="small" v-on:click="addGroup">+ 添加</el-button>
         </el-form-item>
-        <template v-if="ruleForm.IsSupportMobile">
-            <el-form-item label="移动端通知路径">
-                <el-input v-model="ruleForm.ApproveUrl"></el-input>
-            </el-form-item>
-            <el-form-item label="移动端页面路径">
-                <el-input v-model="ruleForm.PhoneUrl"></el-input>
-            </el-form-item>
-        </template>
 
         <el-form-item label="节点配置" v-if="ruleForm.IsFlow">
-            <sam-approver-edit :nodeList.sync="nodeList" :dingdata="DingData" :addable="true" :rolelist="rolelist" :postdata="PostData"></sam-approver-edit>
+            <sam-approver-edit :nodeList.sync="nodeList" :flowid="ruleForm.FlowId" :tpthis="this"
+                               :dingdata="DingData" :addable="true" :rolelist="rolelist" :postdata="PostData"></sam-approver-edit>
         </el-form-item>
 
         <el-form-item label="图标选择">
@@ -295,6 +297,7 @@
         mixins: [mixin],
         data: function () {
             return {
+                test: 'test2333',
                 rolelist: {},
                 nodeList:[],
                 x: 0,
@@ -321,9 +324,12 @@
 
                 groupPeople: groupPeople,
                 rules: {
+                    FlowName: [
+                        { required: true, message: '流程名称不能为空', trigger: 'blur' },
+                        { min: 1, max: 8, message: '长度在 1 到 8 个字符', trigger: 'blur' }
+                    ],
                     ApproveUrl: { required: true, message: '该项不能为空', trigger: 'blur' },
                     FlowId: { required: true, message: '该项不能为空', trigger: 'blur' },
-                    FlowName: { required: true, message: '该项不能为空', trigger: 'blur' },
                     PhoneUrl: { required: true, message: '该项不能为空', trigger: 'blur' },
                     PcUrl: { required: true, message: '该项不能为空', trigger: 'blur' },
                 },
@@ -464,6 +470,7 @@
                 this.y -= 90
             },
             down() {
+                if (this.y >= 360) return
                 this.y = parseInt(this.y)
                 this.y += 90
             },
@@ -473,6 +480,7 @@
                 this.x -= 90
             },
             right() {
+                if (this.x >= 720) return
                 this.x = parseInt(this.x)
                 this.x += 90
             },
@@ -513,7 +521,7 @@
                     console.log(res)
                     if (res.length == 0) {
                         res = [{ "NodeId": 0, "FlowId": "1", "NodeName": "申请人发起", "NodePeople": null, "PeopleId": null, "PreNodeId": "1", "IsAllAllow": true, "Condition": "1", "IsBack": false, "IsNeedChose": true, "IsSend": false, "BackNodeId": null, "ChoseNodeId": "1", "IsSelectMore": "0", "IsMandatory": "1", "ChoseType": "0", "RoleNames": null, "RolesList": null, "AddPeople": [] },
-                            { "NodeId": 5, "FlowId": "1", "NodeName": "结束", "NodePeople": null, "PeopleId": null, "PreNodeId": null, "IsAllAllow": true, "Condition": "0", "IsBack": false, "IsNeedChose": false, "IsSend": false, "BackNodeId": null, "ChoseNodeId": null, "IsSelectMore": null, "IsMandatory": null, "ChoseType": null, "RoleNames": null, "RolesList": null, "AddPeople": [] }]
+                            { "NodeId": 1, "FlowId": "1", "NodeName": "结束", "NodePeople": null, "PeopleId": null, "PreNodeId": null, "IsAllAllow": true, "Condition": "0", "IsBack": false, "IsNeedChose": false, "IsSend": false, "BackNodeId": null, "ChoseNodeId": null, "IsSelectMore": null, "IsMandatory": null, "ChoseType": null, "RoleNames": null, "RolesList": null, "AddPeople": [] }]
                     }
                     this.nodeList = res
                 })

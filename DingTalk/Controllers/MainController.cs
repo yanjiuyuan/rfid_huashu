@@ -29,35 +29,11 @@ namespace WebZhongZhi.Controllers
         {
             return View();
         }
+        public ActionResult Approval_finishedPurchase()
+        {
+            return View();
+        }
         public ActionResult Approval_list()
-        {
-            return View();
-        }
-
-        public ActionResult Approval_IDone()
-        {
-            ViewBag.Message = "Your contact page.";
-            return View();
-        }
-
-        public ActionResult Approval_fromMe()
-        {
-            return View();
-        }
-
-        public ActionResult Approval_copyMe()
-        {
-            return View();
-        }
-        public ActionResult Approval_usePublicCar()
-        {
-            return View();
-        }
-        public ActionResult Approval_useCar()
-        {
-            return View();
-        }
-        public ActionResult Approval_workOvertime()
         {
             return View();
         }
@@ -77,18 +53,6 @@ namespace WebZhongZhi.Controllers
         {
             return View();
         }
-        public ActionResult Approval_sendRead()
-        {
-            return View();
-        }
-        public ActionResult VoteList()
-        {
-            return View();
-        }
-        public ActionResult Approval_gift()
-        {
-            return View();
-        }
         public ActionResult Approval_picking()
         {
             return View();
@@ -97,31 +61,11 @@ namespace WebZhongZhi.Controllers
         {
             return View();
         }
-        public ActionResult Approval_goOut()
-        {
-            return View();
-        }
         public ActionResult Approval_createProject()
         {
             return View();
         }
-        public ActionResult Approval_crossHelp()
-        {
-            return View();
-        }
-        public ActionResult Approval_techonologySupply()
-        {
-            return View();
-        }
         public ActionResult Approval_changePaper()
-        {
-            return View();
-        }
-        public ActionResult Approval_letGoodsGo()
-        {
-            return View();
-        }
-        public ActionResult Approval_intellectualProperty()
         {
             return View();
         }
@@ -130,10 +74,6 @@ namespace WebZhongZhi.Controllers
             return View();
         }
         public ActionResult Approval_maintain()
-        {
-            return View();
-        }
-        public ActionResult Approval_projectClosure()
         {
             return View();
         }
