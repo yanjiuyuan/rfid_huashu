@@ -55,7 +55,7 @@ namespace DingTalk.Controllers
                             //修改流程状态
                             context.TasksState.Add(new TasksState()
                             {
-                                ApplyMan= tasks.ApplyMan,
+                                ApplyMan = tasks.ApplyMan,
                                 TaskId = TaskId.ToString(),
                                 State = "未完成"
                             });
@@ -1059,11 +1059,12 @@ namespace DingTalk.Controllers
         /// <summary>
         /// 流程界面信息读取接口
         /// </summary>
-        /// <param name="userId">用户Id，用于判断权限(预留，暂时不做)</param>
+        /// <param name="IsAll">查询所有数据（true 不进行过滤查询所有数据 默认为 false）</param>
+        /// <param name="userId">用户Id，用于判断权限</param>
         /// <returns></returns>
         [HttpGet]
         [Route("LoadFlowSort")]
-        public NewErrorModel LoadFlowSort(string userId = "")
+        public NewErrorModel LoadFlowSort(bool IsAll = false, string userId = "")
         {
             try
             {
@@ -1072,7 +1073,7 @@ namespace DingTalk.Controllers
                     FlowInfoServer flowInfoServer = new FlowInfoServer();
                     return new NewErrorModel()
                     {
-                        data = flowInfoServer.GetFlowInfo(userId),
+                        data = flowInfoServer.GetFlowInfo(IsAll, userId),
                         error = new Error(0, "读取成功！", "") { },
                     };
                 }
@@ -1116,7 +1117,28 @@ namespace DingTalk.Controllers
                             {
                                 foreach (var flows in item.flows)
                                 {
-                                    context.Entry<Flows>(flows).State = EntityState.Modified;
+                                    if (flows.IsFlow == false)
+                                    {
+                                        //当前状态为流程时判断 是否存在流程未完成
+                                        List<TasksState> tasksStates = context.TasksState.Where(t => t.FlowId == flows.FlowId.ToString() && t.State == "未完成").ToList();
+
+                                        if (tasksStates.Count > 0)
+                                        {
+                                            List<string> taskIdList = new List<string>();
+                                            foreach (var tasksState in tasksStates)
+                                            {
+                                                taskIdList.Add(tasksState.TaskId);
+                                            }
+                                            return new NewErrorModel()
+                                            {
+                                                error = new Error(1, $"当前还有流程未完成！流水号为：{string.Join(",", taskIdList)}", "") { },
+                                            };
+                                        }
+                                    }
+                                    else
+                                    {
+                                        context.Entry<Flows>(flows).State = EntityState.Modified;
+                                    }
                                 }
                             }
                         }
@@ -2225,12 +2247,12 @@ namespace DingTalk.Controllers
         {
             DingTalkServersController dingTalkServersController = new DingTalkServersController();
 
-            string ApplyManNew= dDContext.TasksState.Where(t => t.TaskId == TaskId).FirstOrDefault().ApplyMan;
+            string ApplyManNew = dDContext.TasksState.Where(t => t.TaskId == TaskId).FirstOrDefault().ApplyMan;
             if (!string.IsNullOrEmpty(ApplyManNew))
             {
                 ApplyMan = ApplyManNew;
             }
-            
+
             string strLink = LinkUrl + "?taskid=" + TaskId +
                             "&flowid=" + FlowId +
                             "&nodeid=" + NodeId;
