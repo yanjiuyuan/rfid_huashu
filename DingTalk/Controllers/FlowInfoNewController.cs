@@ -726,6 +726,9 @@ namespace DingTalk.Controllers
                 string FindNodeId = context.NodeInfo.SingleOrDefault(u => u.FlowId == FlowId && u.NodeId == NodeId).PreNodeId;
                 string NodeName = context.NodeInfo.SingleOrDefault(u => u.FlowId == FlowId && u.NodeId.ToString() == FindNodeId).NodeName;
                 dic.Add("NodeName", NodeName);
+
+
+
                 if (NodeName == "结束")
                 {
                     //修改流程状态
@@ -877,7 +880,6 @@ namespace DingTalk.Controllers
                         return FindNextPeople(FlowId, ApplyManId, true, false, OldTaskId, NodeId + 1);
                     }
                 }
-
 
                 //节点表找不到人，任务表找
                 if (string.IsNullOrEmpty(NodePeople) && string.IsNullOrEmpty(PeopleId))
@@ -2666,6 +2668,16 @@ namespace DingTalk.Controllers
             {
                 using (DDContext context = new DDContext())
                 {
+                    //校验是否还有未走完的流程
+                    string flowId = nodeInfos[0].FlowId;
+                    List<TasksState> tasksStates = context.TasksState.Where(t => t.FlowId == flowId && t.State == "未完成").ToList();
+                    if (tasksStates.Count > 0)
+                    {
+                        return new NewErrorModel()
+                        {
+                            error = new Error(1, $"流水号：{string.Join(",", tasksStates.Select(t => t.TaskId).ToArray())} 还未走完，请保证所有流程走完后再进行操作！", "") { },
+                        };
+                    }
                     //校验数据
                     if (nodeInfos != null && nodeInfos.Count > 0)
                     {
@@ -2766,6 +2778,102 @@ namespace DingTalk.Controllers
                 return null;
             }
         }
+
+        /// <summary>
+        /// 走过系统流程的用户
+        /// </summary>
+        /// <param name="applyMan">人名模糊查询</param>
+        /// <returns></returns>
+        [HttpGet]
+        [Route("GetAllUserInfo")]
+        public NewErrorModel GetAllUserInfo(string applyMan)
+        {
+            try
+            {
+                DDContext dDContext = new DDContext();
+                List<DingTalk.Models.ServerModels.UserInfo> userInfos = dDContext.Database.SqlQuery<DingTalk.Models.ServerModels.UserInfo>($"select applyman,applymanid from tasks where applyman like '%{applyMan}%'  and applymanid  is not null  group by  applyman,applymanid   ").ToList();
+                return new NewErrorModel()
+                {
+                    data = userInfos,
+                    error = new Error(0, "修改成功！", "") { },
+                };
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        /// <summary>
+        /// 插入TasksState TaskId  2020-03-09
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet]
+        [Route("InsertTasksState")]
+        public NewErrorModel InsertTasksState()
+        {
+            try
+            {
+                DDContext dDContext = new DDContext();
+                List<int?> vs = dDContext.Tasks.Select(t => t.TaskId).Distinct().ToList();
+
+                foreach (var item in vs)
+                {
+                    dDContext.TasksState.Add(new TasksState()
+                    {
+                        TaskId = item.ToString()
+                    }); ;
+                }
+                dDContext.SaveChanges();
+
+                return new NewErrorModel()
+                {
+                    error = new Error(0, $"成功插入数据{vs.Count.ToString()}！条", "") { },
+                };
+            }
+            catch (Exception)
+            {
+
+                throw;
+            }
+        }
+
+
+        /// <summary>
+        /// 更新TasksState State  2020-03-09
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet]
+        [Route("UpdateTasksState")]
+        public NewErrorModel UpdateTasksState()
+        {
+            try
+            {
+                DDContext dDContext = new DDContext();
+
+                FlowInfoServer flowInfoServer = new FlowInfoServer();
+                List<TasksState> tasksStates = dDContext.TasksState.ToList();
+
+                foreach (var item in tasksStates)
+                {
+                    item.State = flowInfoServer.GetTasksState(item.TaskId.ToString());
+                    dDContext.Entry<TasksState>(item).State=EntityState.Modified;
+                }
+                dDContext.SaveChanges();
+
+                return new NewErrorModel()
+                {
+                    error = new Error(0, $"成功更新数据{tasksStates.Count.ToString()}！条", "") { },
+                };
+
+            }
+            catch (Exception)
+            {
+
+                throw;
+            }
+        }
+
 
         /// <summary>
         /// 旧数据迁移(2019.12.23)
