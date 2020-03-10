@@ -47,7 +47,7 @@ namespace DingTalk.Models.DingModels
         ///  «∑Ò∆Ù”√
         /// </summary>
         public int? IsEnable { get; set; }
-        
+
         /// <summary>
         /// ≈≈–Ú
         /// </summary>
