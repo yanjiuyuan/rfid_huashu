@@ -173,6 +173,7 @@
         },
         created: function () {
             var that = this
+            that.getMenu()
             var node = document.getElementById('content');
             var intval = window.setInterval(function () {
                 if (DingData.userid) {
