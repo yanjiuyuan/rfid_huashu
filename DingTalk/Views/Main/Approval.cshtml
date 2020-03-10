@@ -24,7 +24,7 @@
             <template slot="title">
                 <span style="font-size:20px;">{{m.SORT_NAME}}</span>
             </template>
-            <div v-for="l in m.flows" v-if="l.PcUrl" class="approval-box" v-on:click="toApprove(l.PcUrl,l)" style="cursor:pointer;">
+            <div v-for="l in m.flows" class="approval-box" v-on:click="toApprove(l.PcUrl,l)" style="cursor:pointer;">
                 <div class="approval-box-img" :style="{backgroundPosition:l.Position}"></div>
                 <p>{{l.FlowName}}</p>
             </div>
