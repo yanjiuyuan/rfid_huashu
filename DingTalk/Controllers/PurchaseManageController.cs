@@ -504,9 +504,6 @@ namespace DingTalk.Controllers
                     Name = "合同";
                 }
             }
-            //string path = "";
-            //string path = pdfHelper.GeneratePDF(FlowName, TaskId, tasks.ApplyMan, tasks.Dept, tasks.ApplyTime,
-            //Name, ProjectName, ProjectNo, "2", 300, 650, contentList, contentWithList, dtSourse, dtApproveView, null);
 
             string path = pdfHelper.GeneratePDF(FlowName, TaskId, tasks.ApplyMan, tasks.Dept, tasks.ApplyTime, ProjectName, ProjectNo, "2", 300, 650, contentList,
                 contentWithList, dtSourse, dtApproveView, null);
