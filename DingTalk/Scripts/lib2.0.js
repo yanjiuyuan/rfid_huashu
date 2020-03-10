@@ -23,7 +23,7 @@ var fileList = []
 var pdfList = []
 let jinDomarn = 'http://wuliao5222.55555.io:35705/api/'
 //let serverUrl = 'http://17e245o364.imwork.net:49415/'
-let serverUrl = 'http://' + window.location.host +'/'
+let serverUrl = 'http://' + window.location.host + '/'
 let ProjectTypes = ['自研项目', '纵向项目', '横向项目', '测试项目']
 let PTypes = [
     { label: '研发类', value: '研发类', children: [{ value: '自研', label: '自研' }, { value: '横向', label: '横向' }, { value: '纵向', label: '纵向' }, { value: '测试', label: '测试' }] },
@@ -50,7 +50,7 @@ function getLocalObj(name) {
 }
 
 function setLocalObj(name, obj) {
-    localStorage.setItem(name,JSON.stringify(obj))
+    localStorage.setItem(name, JSON.stringify(obj))
 }
 
 function logout() {
@@ -89,13 +89,13 @@ function goError() {
     }
 }
 
-function loadHtml(parentId,childId) {
+function loadHtml(parentId, childId) {
     $("#" + parentId).html('')
     $("#" + parentId).append($("#" + childId))
 }
 
 function _cloneObj(obj) {
-     return $.extend(true, {}, obj)
+    return $.extend(true, {}, obj)
 }
 
 function _cloneArr(arr) {
@@ -144,7 +144,7 @@ function _delCookie(name) {
 }
 
 function _dateToString(date, split) {
-    if(!split) split = "-"
+    if (!split) split = "-"
     var d = new Date(date)
     var year = d.getFullYear()
     var month = d.getMonth() + 1
@@ -172,7 +172,7 @@ function _timeToString(date, split) {
 }
 
 function _stringToDate(str) {
-    str = str.replace(/-/g, '/'); 
+    str = str.replace(/-/g, '/');
     var date = new Date(str);
     date.setDate(date.getDate() + 1);
     return date
@@ -216,7 +216,7 @@ function _getTime() {
     return year + split + month + split + day + ' ' + hour + ':' + minute + ':' + second
 }
 
-function _getDate(split,noZero) {
+function _getDate(split, noZero) {
     var d = new Date()
     var year = d.getFullYear()
     var month = d.getMonth() + 1
@@ -226,7 +226,7 @@ function _getDate(split,noZero) {
     if (split)
         return year + split + month + split + day
     else
-        return year + '年' + month + '月' + day + '日' 
+        return year + '年' + month + '月' + day + '日'
 }
 
 function _computeDurTime(startTime, endTime, type) {
@@ -258,7 +258,7 @@ function _computeDurTime(startTime, endTime, type) {
 function _computedTime(startHour, startMinute, endHour, endMinute) {
     if (startMinute > endMinute) {
         endMinute += 60
-        endHour -- 
+        endHour--
     }
     if (endHour < startHour) return '0:0'
     return (endHour - startHour) + ':' + (endMinute - startMinute)
@@ -315,7 +315,7 @@ var pickerOptions = {
         }
     }]
 }
-        
+
 var checkProjectId = (rule, value, callback) => {
     if (!value) {
         return callback(new Error('项目编号不能为空'));
@@ -325,6 +325,19 @@ var checkProjectId = (rule, value, callback) => {
         let reg1 = /^[0-9]{4}[a-zA-Z]{2,3}[0-9]{3}$/
         if (!reg1.test(value)) {
             callback(new Error('请输入正确格式，例：1234**567或者1234***567,*为字母'));
+        } else {
+            callback();
+        }
+    }, 500);
+};
+var checkWord = (rule, value, callback) => {
+    if (!value) {
+        return callback(new Error('不能为空'));
+    }
+    setTimeout(() => {
+        let reg1 = /^[\w]+$/g
+        if (!reg1.test(value)) {
+            callback(new Error('请输入字母或数字！'));
         } else {
             callback();
         }
@@ -343,7 +356,7 @@ var mixin = {
             },
             {
                 name: '图纸设计审核人员',
-                intrudations: ['a)产品设计方案合理、可行，能满足技术（设计）任务书或技术协议书的要求；', '  b)产品图样和设计文件的内容正确，数据、尺寸准确；','  c)设计人员不在时，应承担设计的技术责任。'],
+                intrudations: ['a)产品设计方案合理、可行，能满足技术（设计）任务书或技术协议书的要求；', '  b)产品图样和设计文件的内容正确，数据、尺寸准确；', '  c)设计人员不在时，应承担设计的技术责任。'],
                 label: '设计审核人员的责任',
                 members: []
             }
@@ -354,7 +367,7 @@ var mixin = {
         menu: [],
         specialRole: [],
         specialRoleNames: [],
-        tableForm:{},
+        tableForm: {},
         DingData: {},
         nodeList: [],
         nodeInfo: {},
@@ -439,7 +452,7 @@ var mixin = {
             inputProjectName: [
                 { required: true, message: '内容不能为空!', trigger: 'change' },
                 { min: 0, max: 30, message: '长度在 30 个字符以内', trigger: 'blur' }
-            ], 
+            ],
             Price: [
                 { required: true, message: '价格不能为空！', trigger: 'change' },
                 { type: 'number', message: '必须为数字值' },
@@ -464,10 +477,10 @@ var mixin = {
             ],
             StartTime: [
                 { required: true, message: '开始时间不能为空！', trigger: 'change' }
-            ], 
+            ],
             EndTimeTime: [
                 { required: true, message: '结束时间不能为空！', trigger: 'change' }
-            ], 
+            ],
             UseTime: [
                 { required: true, message: '时长不能为空！', trigger: 'change' },
                 { min: 0, max: 30, message: '长度在 30 个字符以内', trigger: 'blur' }
@@ -475,7 +488,7 @@ var mixin = {
             OverTimeContent: [
                 { required: true, message: '不能为空！', trigger: 'change' },
                 { min: 0, max: 30, message: '长度在 30 个字符以内', trigger: 'blur' }
-            ], 
+            ],
             EffectiveTime: [
                 { required: true, message: '有效时间不能为空！', trigger: 'change' },
                 { min: 0, max: 30, message: '长度在 30 个字符以内', trigger: 'blur' }
@@ -496,11 +509,11 @@ var mixin = {
             ReceivingTime: [
                 { required: true, message: '时间不能为空！', trigger: 'blur' },
                 { min: 0, max: 30, message: '长度在 30 个字符以内', trigger: 'blur' }
-            ], 
+            ],
             MainIdea: [
                 { required: true, message: '主要内容不能为空！', trigger: 'blur' },
                 { min: 0, max: 140, message: '长度在 140 个字符以内', trigger: 'blur' }
-            ], 
+            ],
             Suggestion: [
                 { required: true, message: '拟办意见不能为空！', trigger: 'blur' },
                 { min: 0, max: 30, message: '长度在 30 个字符以内', trigger: 'blur' }
@@ -508,7 +521,7 @@ var mixin = {
             Leadership: [
                 { required: true, message: '领导阅示不能为空！', trigger: 'blur' },
                 { min: 0, max: 30, message: '长度在 30 个字符以内', trigger: 'blur' }
-            ], 
+            ],
             Review: [
                 { required: true, message: '部门阅办情况不能为空！', trigger: 'blur' },
                 { min: 0, max: 30, message: '长度在 30 个字符以内', trigger: 'blur' }
@@ -520,17 +533,17 @@ var mixin = {
         },
         pickerOptions: pickerOptions,
         CompanyNames: CompanyNames,
-        dialogFormVisible:false,
+        dialogFormVisible: false,
         currentPage: 1,
         totalRows: 0,
         pageSize: 5,
         dingList: [],
         PTypes: PTypes,
         project: {},
-        purchaseList:[],
+        purchaseList: [],
         noList: [],
 
-        groupPeople:[],
+        groupPeople: [],
 
         date: _getDate(),
         //审批页面参数
@@ -542,13 +555,13 @@ var mixin = {
         Index: '',
     },
     methods: {
-        doWithErrcode(error,url, errorFunc) {
+        doWithErrcode(error, url, errorFunc) {
             if (!error) {
                 return 1
             }
             if (error && error.errorCode != 0) {
                 if (errorFunc) {
-                    if(errorFunc() === false) return 1
+                    if (errorFunc() === false) return 1
                 }
                 this.elementAlert('报错信息', error.errorMessage)
                 //报错日志
@@ -592,7 +605,7 @@ var mixin = {
                         console.log(url)
                         console.log(res)
                     }
-                    
+
                     if (that.doWithErrcode(res.error, url, errorFunc)) {
                         return
                     }
@@ -624,7 +637,7 @@ var mixin = {
                 data: param,
                 success: function (res) {
                     if (showLoading) { loading.close() }
-                    if (typeof (res) == 'string') res = JSON.parse(res) 
+                    if (typeof (res) == 'string') res = JSON.parse(res)
                     console.log(url)
                     console.log(JSON.parse(param))
                     console.log(res)
@@ -650,7 +663,7 @@ var mixin = {
         initStart(callBack = function () { }) {
             Index = ''
             State = "未完成"
-            this.doneloadTmp = false 
+            this.doneloadTmp = false
             this.DingData = DingData
             this.DeptNames = DeptNames
             this.data = []
@@ -691,7 +704,7 @@ var mixin = {
                 IsEnable: '1',
                 FlowId: FlowId,
                 IsSend: false,
-                State: '1', 
+                State: '1',
                 Title: FlowName,
             }
             this.tableForm = {}
@@ -719,7 +732,7 @@ var mixin = {
             this['Id'] = Id
             this.index = Index
             this.Index = Index
-               
+
             this.DingData = DingData
             this.DeptNames = DeptNames
             this.data = []
@@ -763,7 +776,7 @@ var mixin = {
                 State: '1',
                 Title: FlowName,
             }
-           
+
             if (DingData.dept && DingData.dept[0]) this.ruleForm.Dept = DingData.dept[0]
             this.GetDingList(TaskId)
             this.getNodeInfo(false, callBack)
@@ -785,13 +798,13 @@ var mixin = {
                     let mustList = []
                     let choseList = []
                     if (that.nodeInfo.IsMandatory) mustList = that.nodeInfo.IsMandatory.split(',')
-                    if (that.nodeInfo.ChoseNodeId) choseList = that.nodeInfo.ChoseNodeId.split(',') 
+                    if (that.nodeInfo.ChoseNodeId) choseList = that.nodeInfo.ChoseNodeId.split(',')
                     for (let node of that.nodeList) {
                         if ((that.nodeInfo.IsNeedChose && choseList.indexOf(node.NodeId + '') >= 0)
                             || (that.addPeopleNodes && that.addPeopleNodes.indexOf(node.NodeId) >= 0)
                             || (node.NodeName.indexOf('申请人') >= 0 && node.NodeId > 0)) {
                             if ((node.AddPeople.length == 0 && mustList[choseList.indexOf(node.NodeId + '')] == '1') ||
-                                (node.AddPeople.length == 0 && (that.addPeopleNodes && that.addPeopleNodes.indexOf(node.NodeId) >= 0))){
+                                (node.AddPeople.length == 0 && (that.addPeopleNodes && that.addPeopleNodes.indexOf(node.NodeId) >= 0))) {
                                 that.$alert(' 审批人不允许为空，请输入！', '提交失败', {
                                     confirmButtonText: '确定',
                                     callback: action => {
@@ -853,10 +866,10 @@ var mixin = {
                 "ImageUrl": this.ruleForm.ImageUrl || '',
                 "OldImageUrl": this.ruleForm.OldImageUrl || '',
                 "FileUrl": this.ruleForm.FileUrl || '',
-                "MediaId": this.ruleForm.MediaId  || '',
+                "MediaId": this.ruleForm.MediaId || '',
                 "OldFileUrl": this.ruleForm.OldFileUrl || '',
                 "FilePDFUrl": this.ruleForm.FilePDFUrl || '',
-                "MediaIdPDF": this.ruleForm.MediaIdPDF  || '',
+                "MediaIdPDF": this.ruleForm.MediaIdPDF || '',
                 "OldFilePDFUrl": this.ruleForm.OldFilePDFUrl || '',
                 "ProjectId": this.ruleForm.ProjectId || '',
                 "ProjectName": this.ruleForm.ProjectName || '',
@@ -880,8 +893,8 @@ var mixin = {
             }
             let mustList = []
             let choseList = []
-            if (that.nodeInfo.IsMandatory) mustList = that.nodeInfo.IsMandatory.split(',') 
-            if (that.nodeInfo.ChoseNodeId) choseList = that.nodeInfo.ChoseNodeId.split(',') 
+            if (that.nodeInfo.IsMandatory) mustList = that.nodeInfo.IsMandatory.split(',')
+            if (that.nodeInfo.ChoseNodeId) choseList = that.nodeInfo.ChoseNodeId.split(',')
             for (let node of this.nodeList) {
                 if ((that.nodeInfo.IsNeedChose && choseList.indexOf(node.NodeId + '') >= 0)
                     || (that.addPeopleNodes && that.addPeopleNodes.indexOf(node.NodeId) >= 0)) {
@@ -953,7 +966,7 @@ var mixin = {
         },
         //撤回审批
         rebackSubmit() {
-            this.$confirm('是否确认撤回申请？','提示信息')
+            this.$confirm('是否确认撤回申请？', '提示信息')
                 .then(_ => {
                     this.disablePage = true
                     var param = {
@@ -961,13 +974,13 @@ var mixin = {
                         "NodeId": 0,
                         "Remark": this.ruleForm.Mark
                     }
-                    this.returnSubmit(param,'撤回')
+                    this.returnSubmit(param, '撤回')
                 })
                 .catch(_ => {
 
                 });
         },
-        returnSubmit(option,type) {
+        returnSubmit(option, type) {
             this.disablePage = true
             var param = {
                 "TaskId": TaskId,
@@ -997,7 +1010,7 @@ var mixin = {
         resetForm(formName) {
             this.$refs[formName].resetFields();
         },
-        
+
         //显示临时保存数据
         saveTempData() {
             for (let p of slParam) {
@@ -1022,7 +1035,7 @@ var mixin = {
             }
             localStorage.clear()
         },
-        saveData(key,value) {
+        saveData(key, value) {
             var Days = 7;
             var exp = new Date();
             exp.setTime(exp.getTime() + Days * 24 * 60 * 60 * 1000);
@@ -1032,7 +1045,7 @@ var mixin = {
                 return
             }
             document.cookie = FlowId + "-" + key + "=" + JSON.stringify(value) + ";expires=" + exp.toGMTString();
-            
+
             //document.cookie = FlowId + "-file=" + JSON.stringify(files) + ";expires=" + exp.toGMTString();
             //document.cookie = FlowId + "-purchaseList=" + JSON.stringify(purchaseList) + ";expires=" + exp.toGMTString();
             //document.cookie = FlowId + "-dataArr=" + JSON.stringify(purchaseList) + ";expires=" + exp.toGMTString();
@@ -1072,7 +1085,7 @@ var mixin = {
                 nodeList: this.nodeList
             }
             ReApprovalTempData['tableForm'] = this.tableForm || {}
-            if (this.data && this.data.length>0) {
+            if (this.data && this.data.length > 0) {
                 ReApprovalTempData['dataArr'] = this.data
             } else if (this.tableData && this.tableData.length > 0) {
                 ReApprovalTempData['dataArr'] = this.tableData
@@ -1144,7 +1157,7 @@ var mixin = {
                 if (proj.ProjectId == id) {
                     this.ruleForm.ProjectId = proj.ProjectId
                     this.ruleForm.ProjectName = proj.ProjectName
-                    if(FlowId != 6)this.ruleForm.ProjectType = proj.ProjectType
+                    if (FlowId != 6) this.ruleForm.ProjectType = proj.ProjectType
                     this.project = proj
                     this.ruleForm.Title = proj.ProjectId + ' - ' + proj.ProjectName
 
@@ -1160,7 +1173,7 @@ var mixin = {
                     }
                 }
             }
-            
+
         },
         //获取特殊角色详细信息
         getSpecialRoleInfo: function (roleName) {
@@ -1235,7 +1248,7 @@ var mixin = {
                 var oldUrlList = data.OldFilePDFUrl.split(',')
                 var MediaIdList = data.MediaIdPDF ? data.MediaIdPDF.split(',') : []
                 var stateList = data.PdfState ? data.PdfState.split(',') : []
-                
+
                 for (let i = 0; i < urlList.length; i++) {
                     pdfList.push({
                         response: { Content: urlList[i] },
@@ -1342,7 +1355,7 @@ var mixin = {
                 }
                 callBack()
             })
-            
+
         },
         loadReApprovalData_done() {
             //重新发起获取数据后加载
@@ -1368,7 +1381,7 @@ var mixin = {
             })
         },
         //获取審批節點數據
-        getNodeInfo(ifStart,callBack) {
+        getNodeInfo(ifStart, callBack) {
             var url = "/FlowInfoNew/getnodeinfo?FlowId=" + FlowId + "&nodeid=" + NodeId
             this.GetData(url, (res) => {
                 this.nodeInfo = res[0]
@@ -1445,7 +1458,7 @@ var mixin = {
             console.log(users)
             dd.biz.contact.choose({
                 multiple: true, //是否多选： true多选 false单选； 默认true
-                users: users||[], //默认选中的用户列表，员工userid；成功回调中应包含该信息
+                users: users || [], //默认选中的用户列表，员工userid；成功回调中应包含该信息
                 corpId: DingData.CorpId, //企业id
                 onSuccess: function (data) {
                     that.groupPeople = data
@@ -1595,7 +1608,7 @@ var mixin = {
             console.warn(fileList)
         },
         BeforeFileUpload(file) {
-            if (file.name.indexOf('.')<0) {
+            if (file.name.indexOf('.') < 0) {
                 this.$message.error('文件类型不正确，请重新选择！  ')
                 return false
             }
@@ -1703,7 +1716,7 @@ var mixin = {
             this.ruleForm['OldFileUrl'] = ''
             this.ruleForm['MediaId'] = ''
 
-            if (this.imageList[0] && this.imageList[0].response && this.imageList[0].response.Content ) {
+            if (this.imageList[0] && this.imageList[0].response && this.imageList[0].response.Content) {
                 for (let i = 0; i < this.imageList.length; i++) {
                     this.ruleForm.ImageUrl += this.imageList[i].response.Content
                     this.ruleForm.OldImageUrl += this.imageList[i].name
@@ -1770,7 +1783,7 @@ var mixin = {
             return true
         },
         HandlePdfFileRemove(file, fileList) {
-            this.pdfList = _cloneArr(fileList) 
+            this.pdfList = _cloneArr(fileList)
             this.mediaPdfList = []
             for (let f of fileList) {
                 if (f.mediaid) this.mediaPdfList.push(f.mediaid)
@@ -1837,9 +1850,9 @@ var mixin = {
             $.ajax({
                 url: url,
                 dataType: "json",
-                headers: { Accept: 'application/json'},
+                headers: { Accept: 'application/json' },
                 success: function (data) {
-                    if (typeof (data) == 'string') data = JSON.parse(data) 
+                    if (typeof (data) == 'string') data = JSON.parse(data)
                     console.log(url)
                     console.log(param)
                     console.log(data)
@@ -1879,7 +1892,7 @@ var mixin = {
                 data: JSON.stringify(param),
                 dataType: "json",
                 success: function (data) {
-                    if (typeof (data) == 'string') data = JSON.parse(data) 
+                    if (typeof (data) == 'string') data = JSON.parse(data)
                     console.log(data)
                     if (data.error && data.error.errorCode != 0) {
                         that.$message({ type: 'error', message: data.error.errorMessage })
@@ -1952,7 +1965,7 @@ function PostData(url, param, succe, demo) {
         contentType: "application/json; charset=utf-8",
         data: JSON.stringify(param),
         success: function (res) {
-            if (typeof (res) == 'string') res = JSON.parse(res) 
+            if (typeof (res) == 'string') res = JSON.parse(res)
             console.log(url)
             console.log(param)
             console.log(res)
@@ -1962,7 +1975,7 @@ function PostData(url, param, succe, demo) {
             succe(res.data)
         },
         error: function (err) {
-            if(!error(err)) return
+            if (!error(err)) return
             console.error(url)
             console.error(err)
         }
@@ -1974,6 +1987,43 @@ function lengthLimit(min, max) {
         min: min, max: max, message: '长度在 ' + min + ' 到 ' + max + ' 个字符', trigger: 'blur'
     }
 }
+
+
+//钉钉官方流程编辑
+var getChildrenTextContent = function (children) {
+    return children.map(function (node) {
+        return node.children
+            ? getChildrenTextContent(node.children)
+            : node.text
+    }).join('')
+}
+Vue.component('anchored-heading', {
+    render: function (createElement) {
+        // 创建 kebab-case 风格的 ID
+        var headingId = getChildrenTextContent(this.$slots.default)
+            .toLowerCase()
+            .replace(/\W+/g, '-')
+            .replace(/(^-|-$)/g, '')
+
+        return createElement(
+            'h' + this.level,
+            [
+                createElement('a', {
+                    attrs: {
+                        name: headingId,
+                        href: '#' + headingId
+                    }
+                }, this.$slots.default)
+            ]
+        )
+    },
+    props: {
+        level: {
+            type: Number,
+            required: true
+        }
+    }
+})
 
 //选择项目控件
 Vue.component('sam-dropdown', {
@@ -2003,7 +2053,7 @@ Vue.component('sam-dropdown', {
 })
 //多选控件
 Vue.component('sam-checkbox', {
-    props: ['str','arr','onchange'],
+    props: ['str', 'arr', 'onchange'],
     template: ` <el-checkbox-group v-model="value" v-on:change="handleChange">
                     <el-checkbox v-for="a in arr" :label="a" :key="a"></el-checkbox>
                 </el-checkbox-group>`,
@@ -2029,7 +2079,7 @@ Vue.component('sam-checkbox', {
 })
 //选择小组组件
 Vue.component('sam-group', {
-    props: ['names', 'ids', 'single', 'onchange','disable'],
+    props: ['names', 'ids', 'single', 'onchange', 'disable'],
     template: `  <div v-if="names">
                     <el-tag :key="tag" v-for="tag in names.split(',')" closable
                             :disable-transitions="false" v-on:close="handleClose(tag)">
@@ -2060,14 +2110,14 @@ Vue.component('sam-group', {
                 this.tids = []
             }
             dd.biz.contact.choose({
-                multiple: this.single ? false :true, //是否多选： true多选 false单选； 默认true
+                multiple: this.single ? false : true, //是否多选： true多选 false单选； 默认true
                 users: this.tids, //this.tids 默认选中的用户列表，员工userid；成功回调中应包含该信息
                 corpId: DingData.CorpId, //企业id
-                max:10,
+                max: 10,
                 onSuccess: function (data) {
                     console.log(data)
                     for (let d of data) {
-                        if (that.tids.indexOf(d.emplId)>=0) continue
+                        if (that.tids.indexOf(d.emplId) >= 0) continue
                         that.tags.push(d.name)
                         that.tids.push(d.emplId)
                     }
@@ -2106,7 +2156,7 @@ Vue.component('custom-input', {
   `
 })
 Vue.component('sam-input', {
-    props: ['value', 'required', 'type', 'minlength', 'maxlength', 'callBack', 'max', 'min', 'placeholder','disabled'],
+    props: ['value', 'required', 'type', 'minlength', 'maxlength', 'callBack', 'max', 'min', 'placeholder', 'disabled'],
     template: `<el-input v-model=value :value=value show-word-limit  :type="type||'input'" :placeholder = "placeholder || ''"
                         :minlength = "minlength||0" :maxlength = "maxlength||50" v-on:blur="onBlur" :disabled='disabled'
                         :class="{ redborder:(value =='' && required)}">
@@ -2114,7 +2164,7 @@ Vue.component('sam-input', {
     data: function () {
         return {
             Index: Index,
-            value2:this.value
+            value2: this.value
         }
     },
     methods: {
@@ -2136,7 +2186,7 @@ Vue.component('sam-input', {
 })
 //时间区间选择器组件
 Vue.component('sam-timerange', {
-    props: ['value1', 'value2', 'required', 'onchange','date'],
+    props: ['value1', 'value2', 'required', 'onchange', 'date'],
     template: `<div>
                  <el-date-picker
                       v-model="value"
@@ -2271,7 +2321,7 @@ Vue.component('sam-approver-list', {
     data: function () {
         return {
             State: State,
-            Index:Index,
+            Index: Index,
             member1: '',
             member2: '',
         }
@@ -2289,7 +2339,7 @@ Vue.component('sam-approver-list', {
                 choosed.push(p.emplId)
             }
             dd.biz.contact.choose({
-                multiple: selectMoreList[choseList.indexOf(nodeId + '')] == '1'?true:false, //是否多选： true多选 false单选； 默认true
+                multiple: selectMoreList[choseList.indexOf(nodeId + '')] == '1' ? true : false, //是否多选： true多选 false单选； 默认true
                 users: choosed, //默认选中的用户列表，员工userid；成功回调中应包含该信息
                 corpId: DingData.CorpId, //企业id
                 max: 10, //人数限制，当multiple为true才生效，可选范围1-1500
@@ -2334,7 +2384,7 @@ Vue.component('sam-approver-list', {
             });
         },
         //下拉框选人添加
-        selectSpecialMember(node,userid) {
+        selectSpecialMember(node, userid) {
             console.log(node)
             for (let role of node.roles) {
                 if (role.emplId == userid) {
@@ -2365,7 +2415,7 @@ Vue.component('sam-approver-list', {
         },
     },
     computed: {
-        
+
     }
 })
 
@@ -2385,7 +2435,7 @@ Vue.component('Ding2', {
     methods: {
         Ding() {
             let param = {
-                userId: this.dinglist?this.dinglist[0]:'',
+                userId: this.dinglist ? this.dinglist[0] : '',
                 title: '请帮我审核一下流水号为 ' + TaskId + ' 的流程',
                 flowName: FlowName,
                 taskId: TaskId,
@@ -2399,7 +2449,7 @@ Vue.component('Ding2', {
                 type: "POST",
                 //data: JSON.stringify(param),
                 dataType: "json",
-                success:  (res) => {
+                success: (res) => {
                     console.log(url)
                     console.log(param)
                     console.log(res)
@@ -2457,9 +2507,9 @@ Vue.component('ding', {
             form: {
                 alertType: '2',
                 alertDate: '',
-                text: '', 
+                text: '',
             },
-            UserList:[],
+            UserList: [],
             formLabelWidth: '120px'
         }
     },
@@ -2486,7 +2536,7 @@ Vue.component('ding', {
 
 
 Vue.component('sam-addapprover', {
-    props: ['preset', 'approvers','type'],
+    props: ['preset', 'approvers', 'type'],
     template: `<div>
                     <el-form-item v-if="type=='approve'" label="审批人" style="margin-bottom:0px;">
                         <span v-if="preset" class="hint">审批人已由管理员预置,并将自动去重</span>
@@ -2549,7 +2599,7 @@ Vue.component('sam-addapprover', {
 
 //钉钉审批编辑组件
 Vue.component('sam-approver-edit', {
-    props: ['nodelist', 'dingdata', 'addable','rolelist','flowid','tpthis'],
+    props: ['nodelist', 'dingdata', 'addable', 'rolelist', 'flowid', 'tpthis'],
     template: `<div>
                     <el-form-item label="审批人" style="margin-bottom:0px;">
                         <h5></h5>
@@ -2691,7 +2741,7 @@ Vue.component('sam-approver-edit', {
                 IsSend: false,
             },
             chooseArr: [],//后续节点
-            needChooseArr:[],//后续且需要选人的节点
+            needChooseArr: [],//后续且需要选人的节点
             chooseMore: '',
             chooseMust: '',
             chooseType: '',
@@ -2767,13 +2817,13 @@ Vue.component('sam-approver-edit', {
             for (let i = 0; i < this.nodelist.length - 1; i++) {
                 if (i < index) continue
                 this.nodelist[i].PreNodeId = parseInt(this.nodelist[i].PreNodeId) - 1 + ''
-                this.nodelist[i].NodeId --
+                this.nodelist[i].NodeId--
             }
-            this.nodelist[this.nodelist.length-1].NodeId--
+            this.nodelist[this.nodelist.length - 1].NodeId--
         },
         //编辑节点提交
         editNode(node, index) {
-            
+
             if (node.NodeName == '结束') return
             this.dialogName = "编辑节点"
             this.chooseArr = []//后续节点
@@ -2786,7 +2836,7 @@ Vue.component('sam-approver-edit', {
             this.form.NodePeople = ''
             this.form.PeopleId = ''
 
-            for (let i = node.NodeId + 1; i < this.nodelist.length-1; i++) {
+            for (let i = node.NodeId + 1; i < this.nodelist.length - 1; i++) {
                 this.chooseArr.push(i + '')
             }
             let needChooseArr = []
@@ -2804,14 +2854,14 @@ Vue.component('sam-approver-edit', {
                 this.chooseMore = this.chooseMore.substr(0, this.chooseMore.length - 1)
                 this.chooseMust = this.chooseMust.substr(0, this.chooseMust.length - 1)
                 this.chooseType = this.chooseType.substr(0, this.chooseType.length - 1)
-                if (node.RoleNames) this.chooseRole = [node.RoleNames.split(','),'', '', '', '']
+                if (node.RoleNames) this.chooseRole = [node.RoleNames.split(','), '', '', '', '']
             }
             this.form = _cloneObj(node)
             this.form.NodePeople = ''
             this.form.PeopleId = ''
             if (node.NodePeople) this.form.NodePeople = node.NodePeople.join(',')
             if (node.PeopleId) this.form.PeopleId = node.PeopleId.join(',')
-    
+
             console.log(JSON.stringify(this.form))
             this.dialogFormVisible = true
         },
@@ -2827,7 +2877,7 @@ Vue.component('sam-approver-edit', {
             if (tmpForm.NodePeople) {
                 tmpForm.NodePeople = tmpForm.NodePeople.split(',')
                 tmpForm.PeopleId = tmpForm.PeopleId.split(',')
-            } 
+            }
             nodes.push(tmpForm)
             for (let node of this.nodelist) {
                 if (node.NodeId > this.form.NodeId) {
@@ -2857,7 +2907,7 @@ Vue.component('sam-approver-edit', {
                 param.push(node)
             }
             this.tpthis.PostData('FlowInfoNew/UpdateNodeInfos', param, (res) => {
-                this.$message({ type: 'success', message: `修改成功` }, tpthis);
+                this.$message({ type: 'success', message: `修改成功` });
             })
         },
         //添加节点提交
@@ -2921,13 +2971,13 @@ Vue.component('sam-approver-edit', {
             for (let node of this.nodelist) {
                 if (node.NodeId < this.form.NodeId) {
                     nodes.push(node)
-                } 
+                }
             }
             let tmpForm = _cloneObj(this.form)
             if (tmpForm.NodePeople) {
                 tmpForm.NodePeople = tmpForm.NodePeople.split(',')
                 tmpForm.PeopleId = tmpForm.PeopleId.split(',')
-            } 
+            }
             nodes.push(tmpForm)
             for (let node of this.nodelist) {
                 if (node.NodeId >= this.form.NodeId) {
