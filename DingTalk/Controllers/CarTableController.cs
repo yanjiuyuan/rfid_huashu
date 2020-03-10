@@ -24,7 +24,6 @@ namespace DingTalk.Controllers
     [RoutePrefix("CarTable")]
     public class CarTableController : ApiController
     {
-
         /// <summary>
         /// 用车表单保存接口
         /// </summary>
