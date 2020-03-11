@@ -12,7 +12,7 @@ namespace DingTalk.Models.DingModels
     {
         [Column(TypeName = "numeric")]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public decimal Id { get; set; }
+        public int Id { get; set; }
 
         /// <summary>
         /// 流水号
@@ -88,7 +88,7 @@ namespace DingTalk.Models.DingModels
         public string ExpectPurpose { get; set; }
 
         [NotMapped]
-        public List<ProductionOrderDetail> ProductionOrderDetail { get; set; }
+        public List<ProductionOrderDetail> ProductionOrderDetails { get; set; }
     }
 }
 

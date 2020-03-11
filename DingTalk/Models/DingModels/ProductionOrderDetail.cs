@@ -12,7 +12,7 @@ namespace DingTalk.Models.DingModels
     {
         [Column(TypeName = "numeric")]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public decimal Id { get; set; }
+        public int Id { get; set; }
 
         /// <summary>
         /// 流水号

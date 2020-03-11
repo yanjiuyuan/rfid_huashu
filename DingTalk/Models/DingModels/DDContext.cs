@@ -104,6 +104,6 @@ namespace DingTalk.Models.DingModels
         
         public DbSet<ProductionOrderTable> ProductionOrderTable { get; set; }
 
-        public DbSet<ProductionOrderTable> ProductionOrderDetail { get; set; }
+        public DbSet<ProductionOrderDetail> ProductionOrderDetail { get; set; }
     }
 }
