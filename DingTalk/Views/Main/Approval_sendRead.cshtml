@@ -1,0 +1,138 @@
+﻿@{
+                /**/
+
+                Layout = null;
+}
+
+<!--右侧实体内容-->
+<el-main id="partPage" style="position:relative;">
+    <div class="head-fixed" onclick="loadPage('/Main/approval')">
+        <i class="el-icon-arrow-left"></i>
+        {{FlowName}}-{{nodeInfo.NodeName}}
+    </div>
+    <el-form v-on:submit.native.prevent id="formImg" :model="tableForm" :rules="rules" ref="tableForm" label-width="120px" class="demo-ruleForm">
+        @RenderPage("~/Views/Shared/endForm.cshtml")
+        <el-form-item label="来文单位">
+            <el-input v-model="tableForm.ReceivingUnit" style="width:500px;" :disabled="true"></el-input>
+        </el-form-item>
+
+        <el-form-item label="文件文号">
+            <el-input v-model="tableForm.FileNo" style="width:500px;" :disabled="true"></el-input>
+        </el-form-item>
+
+        <el-form-item label="收文时间">
+            <el-date-picker v-model="tableForm.ReceivingTime" :disabled="true"
+                            value-format="yyyy-MM-dd"
+                            type="date" :editable="false"
+                            placeholder="选择日期">
+            </el-date-picker>
+        </el-form-item>
+
+        <el-form-item label="主要内容">
+            <el-input v-model="tableForm.MainIdea" type="textarea" :row="5" style="width:600px;" :disabled="true" :autosize="{ minRows: 4, maxRows: 6}"></el-input>
+        </el-form-item>
+
+        <!--相关文件-->
+        <el-form-item v-if="fileList.length > 0" label="相关文件">
+            <el-card class="box-card">
+                <div v-for="f in fileList" :key="f.name" class="text item">
+                    <span>{{ f.name }}</span>
+                    <el-button size="mini" type="primary" v-on:click="downloadFile(f.mediaId)">下载</el-button>
+                </div>
+            </el-card>
+        </el-form-item>
+
+        <el-form-item v-if="NodeId > 1 || (NodeId == 1 && Index <= 1)" label="拟办意见" prop="Suggestion">
+            <sam-input :value.sync="tableForm.Suggestion" type="textarea" style="width:600px;" :maxlength="200" :disabled="!(NodeId == 1 && Index == 0)"></sam-input>
+            @*<el-input v-model="tableForm.Suggestion" type="textarea" :row="5" style="width:500px;" :disabled="NodeId > 1 || Index == 2 || Index == 1"></el-input>*@
+        </el-form-item>
+        <hr />
+        <template v-if="NodeId > 3|| (NodeId == 3 && (index == 1 || index == 0))">
+            <el-form-item label="领导阅示" prop="Leadership">
+                <el-input v-model="tableForm.Leadership" type="textarea" :row="5" style="width:500px;" :disabled="!(NodeId == 3 && Index == 0)"></el-input>
+            </el-form-item>
+        </template>
+        <!--添加审批人-->
+        @RenderPage("~/Views/Shared/endButton.cshtml")
+        <el-form-item label="操作" v-if="state=='已完成'">
+            <el-button type="primary" v-on:click="print">打印表单</el-button>
+        </el-form-item>
+    </el-form>
+</el-main>
+
+<script>
+    var demo = new Vue({
+        el: "#partPage",
+        mixins: [mixin],
+        data: function () {
+            return {
+                ReviewList: [],
+                HandleImplementationList: [],
+            }
+        },
+        methods: {
+            onSubmit(formName) {
+                var that = this
+                this.$refs['tableForm'].validate((valid) => {
+                    if (valid) {
+                        that.disablePage = true
+                        let url = '/Receiving/Modify'
+                        that.tableForm.Review = ''
+                        that.tableForm.HandleImplementation = ''
+                        that._postData(url, function (data) {
+                            if (data.error.errorCode == 0) {
+                                that.aggreSubmit({
+                                    Id: that.ruleForm.Id,
+                                    Remark: that.ruleForm.Remark
+                                })
+                            }
+                            else {
+                                that.element.alert('提示信息', '提交失败')
+                            }
+                        }, that.tableForm)
+                    }
+                    else {
+                        that.$alert('表单信息不全或有误', '提示信息', {
+                            confirmButtonText: '确定'
+                        })
+                    }
+                })
+            },
+            returnBk() {
+                let param = {
+                    "Id": this.ruleForm.Id,
+                    "Remark": this.ruleForm.Remark
+                }
+                this.returnSubmit(param)
+            },
+            getTable() {
+                var that = this
+                that._getData('/Receiving/Read', function (data) {
+                    that.tableForm = data.data[0]
+                    if (data.error.errorCode != 0) {
+                        that.elementAlert('提示信息', error.errorMessage)
+                        return
+                    }
+                    if (data.data[0].Review) that.ReviewList = data.data[0].Review.split('~')
+                    if (data.data[0].HandleImplementation) that.HandleImplementationList = data.data[0].HandleImplementation.split('~')
+                }, { TaskId: TaskId })
+            },
+            print() {
+                var that = this
+                var param = { taskId: TaskId, UserId: DingData.userid }
+                this._getData('/Receiving/GetReport', function (data) {
+                    console.log('打印结果')
+                    console.log(data)
+                    that.elementAlert('提示信息',data.error.errorMessage)
+                }, param)
+            }
+        },
+        created: function () {
+            this.initEnd(() => { this.getTable() })
+        }
+    })
+
+</script>
+
+
+

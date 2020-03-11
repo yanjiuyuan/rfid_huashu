@@ -910,6 +910,21 @@
     <Content Include="Views\approval\FinishedPurchase.cshtml" />
     <Content Include="Views\Main\Approval_finishedPurchase.cshtml" />
     <Content Include="Views\approval\ContractManager.cshtml" />
+    <Content Include="Views\approval\Gift.cshtml" />
+    <Content Include="Views\approval\SendRead.cshtml" />
+    <Content Include="Views\approval\UseCar.cshtml" />
+    <Content Include="Views\approval\UsePublicCar.cshtml" />
+    <Content Include="Views\approval\CarManager.cshtml" />
+    <Content Include="Views\approval\GoOut.cshtml" />
+    <Content Include="Views\approval\CrossHelp.cshtml" />
+    <Content Include="Views\approval\LetGoodsGo.cshtml" />
+    <Content Include="Views\Main\Approval_usePublicCar.cshtml" />
+    <Content Include="Views\Main\Approval_useCar.cshtml" />
+    <Content Include="Views\Main\Approval_sendRead.cshtml" />
+    <Content Include="Views\Main\Approval_gift.cshtml" />
+    <Content Include="Views\Main\Approval_goOut.cshtml" />
+    <Content Include="Views\Main\Approval_crossHelp.cshtml" />
+    <Content Include="Views\Main\Approval_letGoodsGo.cshtml" />
     <None Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
     </None>

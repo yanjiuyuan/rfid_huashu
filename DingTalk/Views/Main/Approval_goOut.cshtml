@@ -1,0 +1,114 @@
+﻿@{
+                /**/
+
+                Layout = null;
+}
+
+<!--右侧实体内容-->
+<el-main id="partPage" style="position:relative;">
+    <div class="head-fixed" onclick="loadPage('/Main/approval')">
+        <i class="el-icon-arrow-left"></i>
+        {{FlowName}}-{{nodeInfo.NodeName}}
+    </div>
+    <el-form v-on:submit.native.prevent :model="ruleForm" :rules="rules" ref="ruleForm" label-width="150px" class="demo-ruleForm"
+             id="uploadForm" enctype="multipart/form-data">
+        @RenderPage("~/Views/Shared/endForm.cshtml")
+    </el-form>
+    <el-form v-on:submit.native.prevent :model="tableForm" :rules="rules" label-width="120px" class="demo-ruleForm">
+
+        <el-form-item label="同行人">
+            <el-input v-model="tableForm.EvectionMan" style="width:500px;" :disabled="true"></el-input>
+            <el-input v-model="tableForm.EvectionManId" style="display:none;"></el-input>
+        </el-form-item>
+        <hr />
+        <el-form-item label="外出地点">
+            <el-input v-model="tableForm.Place" style="width:550px;" :disabled="true"></el-input>
+        </el-form-item>
+        <el-form-item label="外出事由">
+            <el-input v-model="tableForm.Content" style="width:550px;" :disabled="true"></el-input>
+        </el-form-item>
+
+        <el-form-item label="开始时间">
+            <el-input v-model="tableForm.BeginTime" :disabled="true"></el-input>
+        </el-form-item>
+        <el-form-item label="返回时间">
+            <el-input v-model="tableForm.EndTime" :disabled="true"></el-input>
+        </el-form-item>
+        <el-form-item label="时长/小时">
+            <el-input v-model="tableForm.Duration" :disabled="true"></el-input>
+        </el-form-item>
+        <el-form-item label="接触人员">
+            <el-input v-model="tableForm.ContactPeople" :disabled="true"></el-input>
+        </el-form-item>
+        <!--图片展示-->
+        <el-form-item v-if="imageList.length > 0" label="外出照片">
+            <img v-for="img in imageList" v-on:click="handlePictureCardPreview2(img)" :src="img.url" class="imgList" />
+        </el-form-item>
+
+        <div class="pre-image" v-if="showPre" v-on:click="showPre = false">
+            <img :src="preUrl" />
+        </div>
+
+        <!--相关文件-->
+        <el-form-item v-if="fileList.length > 0" label="相关文件">
+            <el-card class="box-card">
+                <div v-for="f in fileList" :key="f.name" class="text item">
+                    <span>{{ f.name }}</span>
+                    <el-button size="mini" type="primary" v-on:click="downloadFile(f.mediaId)">下载</el-button>
+                </div>
+            </el-card>
+        </el-form-item>
+        <hr />
+    </el-form>
+    <el-form v-on:submit.native.prevent :model="ruleForm" :rules="rules" ref="ruleForm" label-width="150px" class="demo-ruleForm"
+             id="uploadForm" enctype="multipart/form-data">
+        <!--添加审批人-->
+        @RenderPage("~/Views/Shared/endButton.cshtml")
+        <el-form-item label="操作" v-if="state=='已完成'">
+            <el-button type="primary" v-on:click="printPdf">打印表单</el-button>
+        </el-form-item>
+    </el-form>
+</el-main>
+
+<script>
+    var demo = new Vue({
+        el: "#partPage",
+        mixins: [mixin],
+        data: function () {
+            return {
+            }
+        },
+        methods: {
+            onSubmit() {
+                this.aggreSubmit()
+            },
+            getTable() {
+                this.GetData('/Evection/Read' + _formatQueryStr({ TaskId: TaskId }), (res)=> {
+                    this.tableForm = res
+                })
+            },
+            printPdf() {
+                this._postData("/Evection/GetPrintPDF",  ()=> {
+                    this.$message({ type: 'success', message: `文件获取成功，请查收` });
+                },
+                    {
+                        UserId: DingData.userid,
+                        TaskId: TaskId,
+                        IsPublic: false
+                    }
+                )
+            },
+        },
+
+        created: function () {
+            this.initEnd(() => { this.getTable() })
+            if (NodeId == 2 && Index == 0) {
+                this.elementAlert('提示', '该步骤需要拍照上传，请到移动端审批。')
+                this.disablePage = true
+            }
+        }
+    })
+</script>
+
+
+

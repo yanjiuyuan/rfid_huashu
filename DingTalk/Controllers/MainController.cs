@@ -77,5 +77,33 @@ namespace WebZhongZhi.Controllers
         {
             return View();
         }
+        public ActionResult Approval_usePublicCar()
+        {
+            return View();
+        }
+        public ActionResult Approval_useCar()
+        {
+            return View();
+        }
+        public ActionResult Approval_sendRead()
+        {
+            return View();
+        }
+        public ActionResult Approval_gift()
+        {
+            return View();
+        }
+        public ActionResult Approval_goOut()
+        {
+            return View();
+        }
+        public ActionResult Approval_crossHelp()
+        {
+            return View();
+        }
+        public ActionResult Approval_letGoodsGo()
+        {
+            return View();
+        }
     }
 }
