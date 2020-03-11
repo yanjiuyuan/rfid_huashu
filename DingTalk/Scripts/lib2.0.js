@@ -21,7 +21,7 @@ var pdfListOrigin = []
 var imageList = []
 var fileList = []
 var pdfList = []
-let jinDomarn = 'http://wuliao5222.55555.io:35705/api/'
+let jinDomarn = 'http://wuliao5222.55555.io:45578/api/'
 //let serverUrl = 'http://17e245o364.imwork.net:49415/'
 let serverUrl = 'http://' + window.location.host + '/'
 let ProjectTypes = ['自研项目', '纵向项目', '横向项目', '测试项目']
@@ -1725,7 +1725,6 @@ var mixin = {
                     this.ruleForm.OldImageUrl += ','
                 }
             }
-            //this.ruleForm.ImageUrl = this.ruleForm.ImageUrl.replace(/[\(]/g, "（").replace(/[\)]/g, "）")
             if (this.pdfList[0] && this.pdfList[0].response && this.pdfList[0].response.Content) {
                 for (let i = 0; i < this.pdfList.length; i++) {
                     this.ruleForm.FilePDFUrl += this.pdfList[i].response.Content
