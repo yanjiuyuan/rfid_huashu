@@ -1367,7 +1367,7 @@ var mixin = {
         getProjects() {
             var that = this
             $.ajax({
-                url: "/Project/GetAllProJect",
+                url: "/ProjectNew/GetAllProJect",
                 type: "GET",
                 dataType: "json",
                 success: function (data) {
