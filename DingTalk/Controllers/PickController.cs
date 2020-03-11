@@ -53,10 +53,53 @@ namespace DingTalk.Controllers
             }
             catch (Exception ex)
             {
-                throw ex;
+                return new NewErrorModel()
+                {
+                    error = new Error(1, ex.Message, "") { },
+                };
             }
         }
-        
+
+
+        ///// <summary>
+        ///// 默认读取已验收的数据
+        ///// </summary>
+        ///// <param name="ApplyManId"></param>
+        ///// <param name="TaskId">入库单流水号</param>
+        ///// <returns></returns>
+        //[Route("ReadDefault")]
+        //[HttpGet]
+        //public object ReadDefault(string ApplyManId, string TaskId)
+        //{
+        //    try
+        //    {
+        //        using (DDContext context = new DDContext())
+        //        {
+        //            List<Tasks> tasks = FlowInfoServer.ReturnUnFinishedTaskId("27");
+        //            List<Tasks> taskQuery = tasks.Where(t => t.TaskId.ToString() == TaskId && t.NodeId == 1).ToList();
+        //            List<GoDown> goDowns = new List<GoDown>();
+        //            foreach (var task in taskQuery)
+        //            {
+        //                goDowns.AddRange(context.GoDown.Where(g => g.TaskId == task.TaskId.ToString()));
+        //            }
+
+
+        //            return new NewErrorModel()
+        //            {
+        //                count = goDowns.Count,
+        //                data = goDowns,
+        //                error = new Error(0, "读取成功！", "") { },
+        //            };
+        //        }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return new NewErrorModel()
+        //        {
+        //            error = new Error(1, ex.Message, "") { },
+        //        };
+        //    }
+        //}
 
         /// <summary>
         /// 默认读取已验收的数据
@@ -66,7 +109,7 @@ namespace DingTalk.Controllers
         /// <returns></returns>
         [Route("ReadDefault")]
         [HttpGet]
-        public NewErrorModel ReadDefault(string ApplyManId, string TaskId)
+        public object ReadDefault(string ApplyManId, string TaskId)
         {
             try
             {
@@ -76,72 +119,20 @@ namespace DingTalk.Controllers
                 //   keyValuePairs);
 
 
-                //HttpWebResponse httpWebResponse = CreateGetHttpResponse("http://wuliao5222.55555.io:35705/api/Pick/GetAll", 5000, null, null);
-                //StreamReader reader = new StreamReader(httpWebResponse.GetResponseStream(), Encoding.UTF8);
-                //string content = reader.ReadToEnd();
-                //NewErrorModel newErrorModel = new NewErrorModel()
-                //{
-                //    data = new List<GodownModel>() { },
-                //};
-                //newErrorModel = JsonConvert.DeserializeObject<NewErrorModel>(content);
+                HttpWebResponse httpWebResponse = CreateGetHttpResponse("http://wuliao5222.55555.io:35705/api/Pick/GetAll", 5000, null, null);
 
-                //using (DDContext context = new DDContext())
-                //{
-                //    List<GodownModel> goDowns = JsonConvert.DeserializeObject<List<GodownModel>>(newErrorModel.data.ToString()); ;
-                //    Flows flows = context.Flows.Where(f => f.FlowName.Contains("零部件")).First();
-                //    List<Tasks> tasks = FlowInfoServer.ReturnUnFinishedTaskId(flows.FlowId.ToString());
-                //    List<Tasks> taskQuery = tasks.Where(t => t.TaskId.ToString() == TaskId && t.NodeId == 1).ToList();
-                //    List<PurchaseTable> PurchaseTables = new List<PurchaseTable>();
-                //    foreach (var task in taskQuery)
-                //    {
-                //        PurchaseTables.AddRange(context.PurchaseTable.Where(g => g.TaskId == task.TaskId.ToString()));
-                //    }
-                //    List<GodownModel> GodownModelList = new List<GodownModel>();
-                //    foreach (var goDown in goDowns)
-                //    {
-                //        foreach (var PurchaseTable in PurchaseTables)
-                //        {
-                //            if (goDown.fNumber == PurchaseTable.CodeNo)
-                //            {
-                //                GodownModelList.Add(goDown);
-                //            }
-                //        }
-                //    }
-
-                //    return new NewErrorModel()
-                //    {
-                //        count = GodownModelList.Count,
-                //        data = GodownModelList,
-                //        error = new Error(0, "读取成功！", "") { },
-                //    };
-                //}
-
-
+                StreamReader reader = new StreamReader(httpWebResponse.GetResponseStream(), Encoding.UTF8);
+                string content = reader.ReadToEnd();
+                NewErrorModel newErrorModel = new NewErrorModel()
+                {
+                    data = new List<GodownModel>() { },
+                };
+                newErrorModel = JsonConvert.DeserializeObject<NewErrorModel>(content);
 
                 using (DDContext context = new DDContext())
                 {
-                    //判断流水号是否存在
-                    if (context.TasksState.Where(t => t.TaskId == TaskId && t.FlowName.Contains("零部件")).ToList().Count == 0)
-                    {
-                        return new NewErrorModel()
-                        {
-                            error = new Error(1, "该流水号不存在或者不是零部件采购流程！", "") { },
-                        };
-                    }
-
-
-                    HttpWebResponse httpWebResponse = CreateGetHttpResponse("http://wuliao5222.55555.io:35705/api/Pick/ReadPickInfoSingle", 5000, null, null);
-                    StreamReader reader = new StreamReader(httpWebResponse.GetResponseStream(), Encoding.UTF8);
-                    string content = reader.ReadToEnd();
-                    NewErrorModel newErrorModel = new NewErrorModel()
-                    {
-                        data = new List<GodownModel>() { },
-                    };
-                    newErrorModel = JsonConvert.DeserializeObject<NewErrorModel>(content);
                     List<GodownModel> goDowns = JsonConvert.DeserializeObject<List<GodownModel>>(newErrorModel.data.ToString()); ;
-
-
-                    Flows flows = context.Flows.Where(f => f.FlowName.Contains("零部件")).First();
+                    Flows flows = context.Flows.Where(f => f.FlowName.Contains("采购")).First();
                     List<Tasks> tasks = FlowInfoServer.ReturnUnFinishedTaskId(flows.FlowId.ToString());
                     List<Tasks> taskQuery = tasks.Where(t => t.TaskId.ToString() == TaskId && t.NodeId == 1).ToList();
                     List<PurchaseTable> PurchaseTables = new List<PurchaseTable>();
@@ -161,44 +152,21 @@ namespace DingTalk.Controllers
                         }
                     }
 
-                    if (GodownModelList.Count == 0)
-                    {
-                        return new NewErrorModel()
-                        {
-                            error = new Error(1, "查询的物料暂无库存！", "") { },
-                        };
-                    }
-
                     return new NewErrorModel()
                     {
                         count = GodownModelList.Count,
                         data = GodownModelList,
                         error = new Error(0, "读取成功！", "") { },
                     };
-
                 }
             }
             catch (Exception ex)
             {
-                throw ex;
+                return new NewErrorModel()
+                {
+                    error = new Error(1, ex.Message, "") { },
+                };
             }
-        }
-
-        /// <summary>
-        /// 测试
-        /// </summary>
-        /// <returns></returns>
-        [HttpGet]
-        [Route("SocketTest")]
-        public NewErrorModel SocketTest()
-        {
-            HttpWebResponse httpWebResponse = CreateGetHttpResponse("http://wuliao5222.55555.io:35705/api/SocketServer/SaveOutUrl?UserId=123", 5000, null, null);
-            StreamReader reader = new StreamReader(httpWebResponse.GetResponseStream(), Encoding.UTF8);
-            string content = reader.ReadToEnd();
-            return new NewErrorModel()
-            {
-                data= content
-            };
         }
 
         /// <summary>
@@ -223,7 +191,10 @@ namespace DingTalk.Controllers
             }
             catch (Exception ex)
             {
-                throw ex;
+                return new NewErrorModel()
+                {
+                    error = new Error(1, ex.Message, "") { },
+                };
             }
         }
 
@@ -336,7 +307,10 @@ namespace DingTalk.Controllers
             }
             catch (Exception ex)
             {
-                throw ex;
+                return new NewErrorModel()
+                {
+                    error = new Error(1, ex.Message, "") { },
+                };
             }
         }
 
@@ -354,7 +328,6 @@ namespace DingTalk.Controllers
                 using (DDContext context = new DDContext())
                 {
                     List<Pick> purchaseTables = context.Pick.Where(p => p.TaskId == printAndSendModel.TaskId).ToList();
-
                     DataTable dtpurchaseTables = ClassChangeHelper.ToDataTable(purchaseTables);
 
                     string path = HttpContext.Current.Server.MapPath("~/UploadFile/Excel/Templet/领料导出模板.xlsx");
@@ -387,7 +360,10 @@ namespace DingTalk.Controllers
             }
             catch (Exception ex)
             {
-                throw ex;
+                return new NewErrorModel()
+                {
+                    error = new Error(1, ex.Message, "") { },
+                };
             }
         }
 
@@ -527,9 +503,6 @@ namespace DingTalk.Controllers
                                             join t in tasksNew on pi.ProjectId equals t.ProjectId
                                             join p in picks on t.TaskId.ToString()
                                             equals p.TaskId
-                                            where
-                                       key != null ?
-                                       (t.ApplyMan.Contains(key) || t.Dept.Contains(key) || p.fName.Contains(key)) : 1 == 1
                                             select new
                                             {
                                                 t.ProjectName,
@@ -593,9 +566,6 @@ namespace DingTalk.Controllers
                                             join t in tasksNew on pi.ProjectId equals t.ProjectId
                                             join p in picks on t.TaskId.ToString()
                                             equals p.TaskId
-                                            where
-                                       key != null ?
-                                       (t.ApplyMan.Contains(key) || t.Dept.Contains(key) || p.fName.Contains(key)) : 1 == 1
                                             select new
                                             {
                                                 t.ProjectName,
@@ -619,23 +589,24 @@ namespace DingTalk.Controllers
                                 };
                             }
                         }
-                        else
-                        {
-                            return new NewErrorModel()
-                            {
-                                error = new Error(1, "您无权访问该模块数据，请联系管理员！", "") { },
-                            };
-                        }
                     }
                     return null;
                 }
             }
             catch (Exception ex)
             {
-                throw ex;
+                return new NewErrorModel()
+                {
+                    error = new Error(1, ex.Message, null) { },
+                };
             }
         }
-        
+
+
+
+
+
+
         /// <summary>
         /// 同步Post
         /// </summary>
@@ -767,7 +738,8 @@ namespace DingTalk.Controllers
         /// 供应商
         /// </summary>
         public string fFullName { get; set; }
-        
+
+
         /// <summary>
         /// 入库数量
         /// </summary>

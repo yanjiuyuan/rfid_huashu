@@ -49,7 +49,10 @@ namespace DingTalk.Controllers
             }
             catch (Exception ex)
             {
-                throw ex;
+                return new NewErrorModel()
+                {
+                    error = new Error(1, ex.Message, "") { },
+                };
             }
         }
 
@@ -77,7 +80,10 @@ namespace DingTalk.Controllers
             }
             catch (Exception ex)
             {
-                throw ex;
+                return new NewErrorModel()
+                {
+                    error = new Error(1, ex.Message, "") { },
+                };
             }
         }
 
@@ -159,16 +165,7 @@ namespace DingTalk.Controllers
                     };
 
                     Dictionary<string, string> keyValuePairs = new Dictionary<string, string>();
-                    List<string> vs = new List<string>();
-                    foreach (var item in GoDownList)
-                    {
-                        if (!vs.Contains(item.fFullName))
-                        {
-                            vs.Add(item.fFullName);
-                        }
-                    }
-
-                    keyValuePairs.Add("供应商", string.Join(",", vs));
+                    keyValuePairs.Add("供应商", GoDownList[0].fFullName);
                     string path = pdfHelper.GeneratePDF(FlowName, TaskId, tasks.ApplyMan, tasks.Dept, tasks.ApplyTime,
                     null, null, "2", 300, 650, contentList, contentWithList, dtSourse, dtApproveView, null, keyValuePairs);
                     string RelativePath = "~/UploadFile/PDF/" + Path.GetFileName(path);
@@ -196,7 +193,10 @@ namespace DingTalk.Controllers
             }
             catch (Exception ex)
             {
-                throw ex;
+                return new NewErrorModel()
+                {
+                    error = new Error(1, ex.Message, "") { },
+                };
             }
         }
 
@@ -247,7 +247,10 @@ namespace DingTalk.Controllers
             }
             catch (Exception ex)
             {
-                throw ex;
+                return new NewErrorModel()
+                {
+                    error = new Error(1, ex.Message, "") { },
+                };
             }
         }
 
