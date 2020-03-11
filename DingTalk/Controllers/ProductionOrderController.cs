@@ -68,7 +68,7 @@ namespace DingTalk.Controllers
                 productionOrderTable.ProductionOrderDetails = dDContext.ProductionOrderDetail.Where(t => t.TaskId == taskId).ToList();
                 return new NewErrorModel()
                 {
-                    data= productionOrderTable,
+                    data = productionOrderTable,
                     error = new Error(0, "读取成功！", "") { },
                 };
             }
@@ -111,6 +111,30 @@ namespace DingTalk.Controllers
             }
         }
 
+        /// <summary>
+        /// 打印PDF
+        /// </summary>
+        /// <param name="productionOrderPrintModel"></param>
+        /// <returns></returns>
+        [Route("PrintPDF")]
+        [HttpGet]
+        public NewErrorModel PrintPDF(ProductionOrderPrintModel productionOrderPrintModel)
+        {
+            try
+            {
+                return null;
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+    }
 
+    public class ProductionOrderPrintModel
+    {
+        public string applyManId { get; set; }
+
+        public string taskId { get; set; }
     }
 }
