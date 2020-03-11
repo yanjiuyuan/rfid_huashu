@@ -1373,7 +1373,7 @@ var mixin = {
                 success: function (data) {
                     console.log("获取项目列表数据 GetAllProJect")
                     console.log(data)
-                    that.projectList = data
+                    that.projectList = data.data
                 },
                 error: function (err) {
                     console.log(err);
