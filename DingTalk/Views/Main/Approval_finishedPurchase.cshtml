@@ -19,8 +19,8 @@
         <el-table-column prop="UrgentDate" label="需用日期"></el-table-column>
         <el-table-column prop="SendPosition" label="送货地点"></el-table-column>
         <el-table-column prop="Mark" label="备注"></el-table-column>
-        <el-table-column prop="PurchaseMan" label="采购员"></el-table-column>
-        <el-table-column label="采购员" v-if="NodeId == 4">
+        <el-table-column prop="PurchaseMan" v-if="NodeId == !4" label="采购员"></el-table-column>
+        <el-table-column label="采购员" v-if="NodeId == 4" width="120">
             <template slot-scope="scope">
                 <el-select v-model="scope.row.PurchaseManId" placeholder="请选择" v-on:change="choosePeople">
                     <el-option v-for="item in options"
@@ -76,21 +76,15 @@
             onSubmit(formName) {
                 console.log('submit!')
                 var that = this
-                let callBack = function () { }
                 if (NodeId == '4') {
+                    this.addPeopleNodes = [6]
                     let url = '/Purchase/ModifyPurchaseTable'
                     that._postData(url, function (data) {
-                        that.aggreSubmit({
-                            "Id": that.ruleForm.Id,
-                            "Remark": that.ruleForm.Mark
-                        })
+                        that.aggreSubmit()
                     }, that.data)
                 }
                 else {
-                    this.aggreSubmit({
-                        "Id": that.ruleForm.Id,
-                        "Remark": that.ruleForm.Mark
-                    })
+                    this.aggreSubmit()
                 }
             },
 
@@ -148,59 +142,50 @@
                 }
                 var ifTrue = false
 
-                var nodeListNew = []
-                this._getData("/FlowInfoNew/GetSign", function (data) {
-                    nodeListNew = data.data
+                for (let node of this.nodeList) {
+                    if (node.NodeId == 6 && node.ApplyManId == DingData.userid) {
+                        ifTrue = true
+                    }
+                }
+                console.log("ifTrue:  " + ifTrue);
+                if (ifTrue) {
+                    param.PurchaseManId = DingData.userid
+                    console.log("追加参数" + DingData.userid)
+                }
 
-                    for (let node of nodeListNew) {
-                        if (node.NodeId == 6 && node.ApplyManId == DingData.userid) {
-                            ifTrue = true
+                that._getData("Role/GetRoleInfo", function (data) {
+                    console.log('获取采购员信息')
+                    console.log(JSON.stringify(data))
+                    that.options = data
+
+                    that.GetData("/PurchaseNew/ReadPurchaseTable" + _formatQueryStr(param), function (data) {
+                        console.log('获取bom表')
+                        if (NodeId == 4) {
+                            for (let d of data) {
+                                for (let o of that.options) {
+
+                                    if (o.name == '杜双凤') {
+                                        d['PurchaseMan'] = o.name
+                                        d['PurchaseManId'] = o.emplId
+                                    }
+                                }
+                            }
                         }
-                    }
-                    console.log(nodeListNew);
-                    console.log("ifTrue:  "+ ifTrue);
-                    if (ifTrue) {
-                        param.PurchaseManId = DingData.userid
-                        console.log("追加参数" + DingData.userid)
-                    }
-
-                    that._getData("Role/GetRoleInfo", function (data) {
-                        console.log('获取采购员信息')
-                        console.log(JSON.stringify(data))
-                        that.options = data
-
-                        that._getData("/Purchase/ReadPurchaseTable", function (data) {
-                            console.log('获取bom表')
-
-                            if (NodeId == 4) {
-                                for (let d of data) {
-                                    for (let o of that.options) {
-
-                                        if (o.name == '杜双凤') {
-                                            d['PurchaseMan'] = o.name
-                                            d['PurchaseManId'] = o.emplId
-                                        }
-                                    }
+                        if (NodeId == 6 && Index == 0) {
+                            let tmp = []
+                            for (let d of data) {
+                                if (d.PurchaseManId == DingData.userid) {
+                                    tmp.push(d)
                                 }
                             }
-                            if (NodeId == 6 && Index == 0) {
-                                let tmp = []
-                                for (let d of data) {
-                                    if (d.PurchaseManId == DingData.userid) {
-                                        tmp.push(d)
-                                    }
-                                }
-                                data = tmp
-                            }
-                            console.log(param)
-                            console.log(data)
-                            that.data = data
-                            that.setChooseMan()
-                        }, param)
-                    }, { RoleName: "采购员" })
-
-                }, { FlowId: FlowId, TaskId: TaskId })
-
+                            data = tmp
+                        }
+                        console.log(param)
+                        console.log(data)
+                        that.data = data
+                        that.setChooseMan()
+                    })
+                }, { RoleName: "采购员" })
 
             },
         },

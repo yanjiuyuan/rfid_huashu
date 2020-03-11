@@ -140,6 +140,9 @@
                     if (row.FlowId == 26) {
                         loadPage('/Main/approval_finishedPurchase' + _formatQueryStr(param))
                         return
+                    } if (row.FlowId == 1) {
+                        loadPage('/Main/approval_officeSupplies' + _formatQueryStr(param))
+                        return
                     }
 
                     if (row.FlowId == 7) {
