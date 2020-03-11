@@ -1135,6 +1135,10 @@ namespace DingTalk.Controllers
                                                 error = new Error(1, $"当前还有流程未完成！流水号为：{string.Join(",", taskIdList)}", "") { },
                                             };
                                         }
+                                        else
+                                        {
+                                            context.Entry<Flows>(flows).State = EntityState.Modified;
+                                        }
                                     }
                                     else
                                     {
