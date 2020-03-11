@@ -102,5 +102,8 @@ namespace DingTalk.Models.DingModels
 
         public DbSet<Pks> Pks { get; set; }
         
+        public DbSet<ProductionOrderTable> ProductionOrderTable { get; set; }
+
+        public DbSet<ProductionOrderTable> ProductionOrderDetail { get; set; }
     }
 }
