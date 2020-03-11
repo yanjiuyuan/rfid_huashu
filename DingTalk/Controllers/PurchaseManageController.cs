@@ -504,8 +504,12 @@ namespace DingTalk.Controllers
                     Name = "合同";
                 }
             }
+            //string path = pdfHelper.GeneratePDF(FlowName, TaskId, tasks.ApplyMan, tasks.Dept, tasks.ApplyTime,
+            //Name, ProjectName, ProjectNo, "2", 300, 650, contentList, contentWithList, dtSourse, dtApproveView, null);
+
             string path = pdfHelper.GeneratePDF(FlowName, TaskId, tasks.ApplyMan, tasks.Dept, tasks.ApplyTime,
-            Name, ProjectName, ProjectNo, "2", 300, 650, contentList, contentWithList, dtSourse, dtApproveView, null);
+                ProjectName, ProjectNo, "2", 300, 650, contentList, contentWithList, dtSourse, dtApproveView, null);
+
             string RelativePath = "~/UploadFile/PDF/" + Path.GetFileName(path);
 
             List<string> newPaths = new List<string>();
