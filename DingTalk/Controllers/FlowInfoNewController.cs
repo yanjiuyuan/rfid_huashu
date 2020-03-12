@@ -727,6 +727,8 @@ namespace DingTalk.Controllers
                 string NodeName = context.NodeInfo.SingleOrDefault(u => u.FlowId == FlowId && u.NodeId.ToString() == FindNodeId).NodeName;
                 dic.Add("NodeName", NodeName);
 
+                //判断当前节点是否还有待审批
+                //Tasks TaskPro = context.Tasks.Where(u => u.TaskId == OldTaskId).First();
 
 
                 if (NodeName == "结束")
