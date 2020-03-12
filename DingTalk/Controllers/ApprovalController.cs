@@ -97,5 +97,37 @@ namespace WebZhongZhi.Controllers
         {
             return View();
         }
+        public ActionResult Gift()
+        {
+            return View();
+        }
+        public ActionResult SendRead()
+        {
+            return View();
+        }
+        public ActionResult UseCar()
+        {
+            return View();
+        }
+        public ActionResult UsePublicCar()
+        {
+            return View();
+        }
+        public ActionResult CarManager()
+        {
+            return View();
+        }
+        public ActionResult GoOut()
+        {
+            return View();
+        }
+        public ActionResult CrossHelp()
+        {
+            return View();
+        }
+        public ActionResult LetGoodsGo()
+        {
+            return View();
+        }
     }
 }
