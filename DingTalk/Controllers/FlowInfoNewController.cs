@@ -279,15 +279,18 @@ namespace DingTalk.Controllers
         {
             try
             {
+                DDContext contexts = new DDContext();
                 //获取申请人提交表单信息
                 FlowInfoServer fServer = new FlowInfoServer();
                 string taskId = taskList[0].TaskId.ToString();
-                Tasks taskNew = fServer.GetApplyManFormInfo(taskId);
+                //所有信息
+                List<Tasks> TasksAll = contexts.Tasks.Where(t => t.TaskId.ToString() == taskId).AsNoTracking().ToList();
+                //发起者信息
+                Tasks taskNew = TasksAll.Where(t => t.NodeId == 0).FirstOrDefault();
                 Flows flows = fServer.GetFlow(taskNew.FlowId.ToString());
-                DDContext contexts = new DDContext();
+
                 //判断流程状态
                 TasksState tasksState = contexts.TasksState.Where(t => t.TaskId == taskId).FirstOrDefault();
-
                 if (tasksState.State != "未完成")
                 {
                     return new NewErrorModel()
@@ -296,125 +299,111 @@ namespace DingTalk.Controllers
                     };
                 }
 
-
-                if (taskList.Count > 1)  //如果有选人
+                //判断当前节点是否还有待审批
+                Tasks tasksFirst = taskList[0];
+                if (TasksAll.Where(t => t.NodeId == tasksFirst.NodeId && t.State == 0).ToList().Count() > 1)
                 {
-                    if (taskList[0].Id == 0)
-                    {
-                        return new NewErrorModel()
-                        {
-                            error = new Error(1, "流程有误请联系管理员！", "") { },
-                        };
-                    }
+                    tasksFirst.ApplyTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+                    tasksFirst.State = 1; //修改审批状态
+                    tasksFirst.IsEnable = 1; //修改显示状态
+                    contexts.Entry<Tasks>(tasksFirst).State = EntityState.Modified;
+                    contexts.SaveChanges();
+                }
+                else
+                {
 
-                    foreach (var task in taskList)
+                    if (taskList.Count > 1)  //如果有选人
                     {
-                        if (taskList.IndexOf(task) > 0)
+                        if (taskList[0].Id == 0)
                         {
-                            if (task.IsSend == true)
+                            return new NewErrorModel()
                             {
-                                if (taskList.IndexOf(task) == 1)
+                                error = new Error(1, "流程有误请联系管理员！", "") { },
+                            };
+                        }
+
+                        foreach (var task in taskList)
+                        {
+                            if (taskList.IndexOf(task) > 0)
+                            {
+                                if (task.IsSend == true)
                                 {
-                                    await SendOaMsgNew(task.FlowId, task.ApplyManId.ToString(),
-                                task.TaskId.ToString(), taskNew.ApplyMan,
-                                task.Remark, contexts, flows.ApproveUrl,
-                                task.NodeId.ToString(),
-                                false, true);
-                                    Thread.Sleep(100);
-                                    task.IsEnable = 1;
-                                    task.State = 0;
-                                    task.ApplyTime = null;
+                                    if (taskList.IndexOf(task) == 1)
+                                    {
+                                        await SendOaMsgNew(task.FlowId, task.ApplyManId.ToString(),
+                                    task.TaskId.ToString(), taskNew.ApplyMan,
+                                    task.Remark, contexts, flows.ApproveUrl,
+                                    task.NodeId.ToString(),
+                                    false, true);
+                                        Thread.Sleep(100);
+                                        task.IsEnable = 1;
+                                        task.State = 0;
+                                        task.ApplyTime = null;
+                                    }
+                                    else
+                                    {
+                                        task.IsEnable = 0;
+                                        task.State = 0;
+                                        task.ApplyTime = null;
+                                    }
                                 }
                                 else
                                 {
                                     task.IsEnable = 0;
-                                    task.State = 0;
-                                    task.ApplyTime = null;
+                                }
+                                contexts.Tasks.Add(task);
+                                contexts.SaveChanges();
+                            }
+                        }
+                    }
+
+
+
+
+                    //调用寻人接口
+                    Tasks Findtasks = taskList[0];
+                    Dictionary<string, string> dic = new Dictionary<string, string>();
+                    dic = FindNextPeople(Findtasks.FlowId.ToString(), Findtasks.ApplyManId, true, Findtasks.IsSend,
+                    Findtasks.TaskId, Findtasks.NodeId);
+                    int i = 1; //控制推送次数
+
+                    foreach (var tasks in taskList)
+                    {
+                        using (DDContext context = new DDContext())
+                        {
+                            Tasks tasksApplyMan = context.Tasks.Where(t => t.TaskId.ToString() == tasks.TaskId.ToString()
+                                 && t.NodeId == 0).First();
+                            if (!string.IsNullOrEmpty(tasks.ImageUrl))
+                            {
+                                tasksApplyMan.ImageUrl = tasks.ImageUrl;
+                            }
+                            if (!string.IsNullOrEmpty(tasks.OldImageUrl))
+                            {
+                                tasksApplyMan.OldImageUrl = tasks.OldImageUrl;
+                            }
+
+                            if (!string.IsNullOrEmpty(tasksApplyMan.FileUrl))
+                            {
+                                if (!string.IsNullOrEmpty(tasks.FileUrl))
+                                {
+                                    tasksApplyMan.FileUrl = tasksApplyMan.FileUrl + "," + tasks.FileUrl;
+                                    tasksApplyMan.OldFileUrl = tasksApplyMan.OldFileUrl + "," + tasks.OldFileUrl;
+                                    tasksApplyMan.MediaId = tasksApplyMan.MediaId + "," + tasks.MediaId;
                                 }
                             }
                             else
                             {
-                                task.IsEnable = 0;
+                                if (!string.IsNullOrEmpty(tasks.FileUrl))
+                                {
+                                    tasksApplyMan.FileUrl = tasks.FileUrl;
+                                    tasksApplyMan.OldFileUrl = tasks.OldFileUrl;
+                                    tasksApplyMan.MediaId = tasks.MediaId;
+                                }
                             }
-                            contexts.Tasks.Add(task);
-                            contexts.SaveChanges();
-                        }
-                    }
-                }
-
-                //调用寻人接口
-                Tasks Findtasks = taskList[0];
-                Dictionary<string, string> dic = new Dictionary<string, string>();
-                dic = FindNextPeople(Findtasks.FlowId.ToString(), Findtasks.ApplyManId, true, Findtasks.IsSend,
-                Findtasks.TaskId, Findtasks.NodeId);
-                int i = 1; //控制推送次数
-
-                foreach (var tasks in taskList)
-                {
-                    using (DDContext context = new DDContext())
-                    {
-                        Tasks tasksApplyMan = context.Tasks.Where(t => t.TaskId.ToString() == tasks.TaskId.ToString()
-                             && t.NodeId == 0).First();
-                        if (!string.IsNullOrEmpty(tasks.ImageUrl))
-                        {
-                            tasksApplyMan.ImageUrl = tasks.ImageUrl;
-                        }
-                        if (!string.IsNullOrEmpty(tasks.OldImageUrl))
-                        {
-                            tasksApplyMan.OldImageUrl = tasks.OldImageUrl;
-                        }
-
-                        if (!string.IsNullOrEmpty(tasksApplyMan.FileUrl))
-                        {
-                            if (!string.IsNullOrEmpty(tasks.FileUrl))
-                            {
-                                tasksApplyMan.FileUrl = tasksApplyMan.FileUrl + "," + tasks.FileUrl;
-                                tasksApplyMan.OldFileUrl = tasksApplyMan.OldFileUrl + "," + tasks.OldFileUrl;
-                                tasksApplyMan.MediaId = tasksApplyMan.MediaId + "," + tasks.MediaId;
-                            }
-                        }
-                        else
-                        {
-                            if (!string.IsNullOrEmpty(tasks.FileUrl))
-                            {
-                                tasksApplyMan.FileUrl = tasks.FileUrl;
-                                tasksApplyMan.OldFileUrl = tasks.OldFileUrl;
-                                tasksApplyMan.MediaId = tasks.MediaId;
-                            }
-                        }
-                        context.Entry(tasksApplyMan).State = EntityState.Modified;
-                        context.SaveChanges();
-
-                        if (dic["NodeName"] == "结束")
-                        {
-                            //修改流程状态
-                            tasks.IsPost = false;
-                            tasks.State = 1;
-                            tasks.ApplyTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
-                            context.Entry(tasks).State = EntityState.Modified;
+                            context.Entry(tasksApplyMan).State = EntityState.Modified;
                             context.SaveChanges();
 
-                            //修改流程状态
-                            TasksState tasksStateNew = context.TasksState.Where(t => t.TaskId == tasksApplyMan.TaskId.ToString()).FirstOrDefault();
-                            tasksStateNew.State = "已完成";
-                            context.Entry<TasksState>(tasksStateNew).State = EntityState.Modified;
-                            context.SaveChanges();
-
-                            await SendOaMsgNew(taskNew.FlowId, taskNew.ApplyManId.ToString(), tasks.TaskId.ToString(),
-                                       taskNew.ApplyMan, taskNew.Remark, context, flows.ApproveUrl,
-                                       taskNew.NodeId.ToString(),
-                                       false, false, true);
-                            Thread.Sleep(100);
-                            JsonConvert.SerializeObject(new ErrorModel
-                            {
-                                errorCode = 0,
-                                errorMessage = "流程结束",
-                                Content = tasks.TaskId.ToString()
-                            });
-                        }
-                        else
-                        {
-                            if (taskList.IndexOf(tasks) == 0)
+                            if (dic["NodeName"] == "结束")
                             {
                                 //修改流程状态
                                 tasks.IsPost = false;
@@ -422,50 +411,79 @@ namespace DingTalk.Controllers
                                 tasks.ApplyTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
                                 context.Entry(tasks).State = EntityState.Modified;
                                 context.SaveChanges();
+
+                                //修改流程状态
+                                TasksState tasksStateNew = context.TasksState.Where(t => t.TaskId == tasksApplyMan.TaskId.ToString()).FirstOrDefault();
+                                tasksStateNew.State = "已完成";
+                                context.Entry<TasksState>(tasksStateNew).State = EntityState.Modified;
+                                context.SaveChanges();
+
+                                await SendOaMsgNew(taskNew.FlowId, taskNew.ApplyManId.ToString(), tasks.TaskId.ToString(),
+                                           taskNew.ApplyMan, taskNew.Remark, context, flows.ApproveUrl,
+                                           taskNew.NodeId.ToString(),
+                                           false, false, true);
+                                Thread.Sleep(100);
+                                JsonConvert.SerializeObject(new ErrorModel
+                                {
+                                    errorCode = 0,
+                                    errorMessage = "流程结束",
+                                    Content = tasks.TaskId.ToString()
+                                });
                             }
                             else
                             {
-                                //创建流程推送(选人)
-                                //tasks.IsPost = false;
-                                //tasks.State = 0;
-                                //context.Tasks.Add(tasks);
-                                //context.SaveChanges();
-                            }
-                            if (taskList.Count == 1 && taskList.IndexOf(tasks) == 0)  //未选人
-                            {
-                                if (fServer.GetTasksByNotFinished(tasks.TaskId.ToString(), tasks.NodeId.ToString()).Count == 0)
+                                if (taskList.IndexOf(tasks) == 0)
                                 {
-                                    await SendOaMsgNew(tasks.FlowId, dic["PeopleId"].ToString(), tasks.TaskId.ToString(),
-                                        taskNew.ApplyMan, taskNew.Remark, context, flows.ApproveUrl,
-                                        taskNew.NodeId.ToString(),
-                                        false, false);
-                                    Thread.Sleep(100);
+                                    //修改流程状态
+                                    tasks.IsPost = false;
+                                    tasks.State = 1;
+                                    tasks.ApplyTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+                                    context.Entry(tasks).State = EntityState.Modified;
+                                    context.SaveChanges();
                                 }
-                            }
-                            else
-                            {
-                                if (dic["PeopleId"] != null)
+                                else
                                 {
-                                    if (i == 1)  //防止重复推送
+                                    //创建流程推送(选人)
+                                    //tasks.IsPost = false;
+                                    //tasks.State = 0;
+                                    //context.Tasks.Add(tasks);
+                                    //context.SaveChanges();
+                                }
+                                if (taskList.Count == 1 && taskList.IndexOf(tasks) == 0)  //未选人
+                                {
+                                    if (fServer.GetTasksByNotFinished(tasks.TaskId.ToString(), tasks.NodeId.ToString()).Count == 0)
                                     {
-                                        //推送OA消息
-                                        string[] PeopleIdList = dic["PeopleId"].Split(',');
-                                        foreach (var PeopleId in PeopleIdList)
+                                        await SendOaMsgNew(tasks.FlowId, dic["PeopleId"].ToString(), tasks.TaskId.ToString(),
+                                            taskNew.ApplyMan, taskNew.Remark, context, flows.ApproveUrl,
+                                            taskNew.NodeId.ToString(),
+                                            false, false);
+                                        Thread.Sleep(100);
+                                    }
+                                }
+                                else
+                                {
+                                    if (dic["PeopleId"] != null)
+                                    {
+                                        if (i == 1)  //防止重复推送
                                         {
-                                            await SendOaMsgNew(tasks.FlowId, PeopleId, tasks.TaskId.ToString(),
-                                                taskNew.ApplyMan, taskNew.Remark, context, flows.ApproveUrl,
-                                                taskNew.NodeId.ToString(),
-                                                false, false);
-                                            Thread.Sleep(100);
+                                            //推送OA消息
+                                            string[] PeopleIdList = dic["PeopleId"].Split(',');
+                                            foreach (var PeopleId in PeopleIdList)
+                                            {
+                                                await SendOaMsgNew(tasks.FlowId, PeopleId, tasks.TaskId.ToString(),
+                                                    taskNew.ApplyMan, taskNew.Remark, context, flows.ApproveUrl,
+                                                    taskNew.NodeId.ToString(),
+                                                    false, false);
+                                                Thread.Sleep(100);
+                                            }
+                                            i++;
                                         }
-                                        i++;
                                     }
                                 }
                             }
                         }
                     }
                 }
-
                 return new NewErrorModel()
                 {
                     error = new Error(0, "流程创建成功！", "") { },
@@ -2862,7 +2880,7 @@ namespace DingTalk.Controllers
                 foreach (var item in tasksStates)
                 {
                     item.State = flowInfoServer.GetTasksState(item.TaskId.ToString());
-                    dDContext.Entry<TasksState>(item).State=EntityState.Modified;
+                    dDContext.Entry<TasksState>(item).State = EntityState.Modified;
                 }
                 dDContext.SaveChanges();
 
@@ -2993,5 +3011,6 @@ namespace DingTalk.Controllers
         }
 
         #endregion
+
     }
 }
