@@ -11,13 +11,6 @@
     </div>
     <el-form v-on:submit.native.prevent :model="ruleForm" :rules="rules" ref="ruleForm" label-width="120px" class="demo-ruleForm">
         @RenderPage("~/Views/Shared/startForm.cshtml")
-        <el-form-item lable="编码类型">
-            <el-radio-group v-model="codeType" v-on:change="changeCodeType">
-                <el-radio label="1">零部件</el-radio>
-                <el-radio label="2">办公用品</el-radio>
-            </el-radio-group>
-            <span style="color:red;"> 切换编码类型会清空已填编码！！！</span>
-        </el-form-item>
 
         <!--表格實體  -->
         <el-Table :data="purchaseList" stripe border>
@@ -27,40 +20,12 @@
                     <el-button size="mini" type="danger" v-on:click="deleteGood(scope.$index, scope.row)">删除</el-button>
                 </template>
             </el-Table-column>
-            <el-Table-column v-for="(value,key) in allConfig" :prop="key" :label="value" :key="key" :style="{width:lengthConfig[key]+'px'}">
+            <el-Table-column v-for="(value,key) in meterielConfig" :prop="key" :label="value" :key="key">
             </el-Table-column>
-            @*<el-Table-column v-for="(value,key) in allConfig" v-if="needInput.indexOf(key) >=0" :prop="key" :label="value" :key="key" :style="{width:lengthConfig[key]+'px'}">
-                <template slot-scope="scope">
-                    <sam-input :value.sync="scope.row[key]" :required="true"></sam-input>
-                </template>
-            </el-Table-column>
-            <el-Table-column v-for="(value,key) in allConfig" v-if="needInput.indexOf(key) <0" :prop="key" :label="value" :key="key" :style="{width:lengthConfig[key]+'px'}">
-                <template slot-scope="scope">
-                    <sam-input :value.sync="scope.row[key]"></sam-input>
-                </template>
-            </el-Table-column>*@
         </el-Table>
         <hr />
         <!--物料明细-->
         <template v-for="(good,index) in goods">
-            <el-form-item label="物料大类" required="required">
-                <el-select v-model="good.BigCode" :data="index" filterable placeholder="请选择" v-on:change="changeBigCode(good)">
-                    <el-option v-for="item in bigCodes"
-                               :key="item.materialCodeNumber"
-                               :label="item.materialCodeNumber + ' - ' + item.materialName"
-                               :value="item.materialCodeNumber">
-                    </el-option>
-                </el-select>
-            </el-form-item>
-            <el-form-item label="物料小类" required="required">
-                <el-select v-model="good.SmallCode" filterable placeholder="请选择" v-on:change="changeSmallCode(good)">
-                    <el-option v-for="item in smallMaterialCodes"
-                               :key="item.materialCodeNumber"
-                               :label="item.materialCodeNumber + ' - ' + item.materialName"
-                               :value="item.materialCodeNumber">
-                    </el-option>
-                </el-select>
-            </el-form-item>
             <el-form-item v-for="(g,gk) in good" :key="gk" v-if="needInput.indexOf(gk) >= 0 && meterielConfig[gk]"
                           :label="meterielConfig[gk]">
                 <sam-input :value.sync="good[gk]" :required="true"></sam-input>
@@ -78,6 +43,8 @@
 
 <script>
     var meterielConfig = {
+        BigCode: '物料大类编码',
+        SmallCode: '物料小类编码',
         Name: '物料名称',
         Unit: '单位',
         Standard: '规格型号',
@@ -86,43 +53,12 @@
         StandardNumber: '标准号',
         Features: '典型特征',
         purpose: '用途',
-        //Remark: '备注'
-    }
-    var allConfig = _cloneObj(meterielConfig)
-    var configDictionary = {}
-    allConfig['BigCodeName'] = '大类名称'
-    allConfig['BigCode'] = '大类编码'
-    allConfig['SmallCodeName'] = '小类名称'
-    allConfig['SmallCode'] = '小类编码'
-    allConfig = {
-        Name: '物料名称',
-        BigCodeName: '大类名称',
-        BigCode: '大类编码',
-        SmallCodeName: '小类名称',
-        SmallCode: '小类编码',
-        Standard: '规格型号',
-        Unit: '单位',
-        SurfaceTreatment: '表面处理',
-        PerformanceLevel: '性能等级',
-        StandardNumber: '标准号',
-        Features: '典型特征',
-        purpose: '用途',
-    }
-    for (let c in allConfig) {
-        configDictionary[allConfig[c]] = c
+        Remark: '备注'
     }
     var meteriel = {}
-    var lengthConfig = {}
     for (let m in meterielConfig) {
         meteriel[m] = ''
-        switch (m) {
-            case 'Unit': case 'BigCode': case 'SmallCode': case 'PerformanceLevel': case 'Features': lengthConfig[m] = 100; break;
-            default: lengthConfig[m] = '';
-        }
-    } 
-    meteriel['BigCode'] = ''
-    meteriel['SmallCode'] = ''
-    //meteriel['smallMaterialCodes'] = []
+    }
     var demo = new Vue({
         el: "#partPage",
         mixins: [mixin],
@@ -130,16 +66,13 @@
             return {
                 purchaseList: [],
                 smallMaterialCodes:[],
-                allConfig: allConfig,
-                lengthConfig: lengthConfig,
                 meterielConfig: meterielConfig,
                 meteriel: meteriel,
-                needInput: ['BigCode', 'SmallCode', 'BigCodeName', 'SmallCodeName', 'Name', 'Standard', 'Unit', 'Remark'],
+                needInput: ['BigCode', 'SmallCode', 'Name', 'Standard', 'Unit'],
                 bigCodes: [{
                     materialCodeNumber: 1,
                     materialName:''
                 }],
-                codeType: '1',
                 goods: [_cloneObj(meteriel)],
             }
         },
@@ -154,7 +87,7 @@
                 }
                 for (var i = 0; i < this.purchaseList.length;i++) {
                     let d = this.purchaseList[i]
-                    if (!d.BigCode || !d.BigCode || !d.Name || !d.Standard || !d.BigCodeName || !d.SmallCodeName) {
+                    if (!d.BigCode || !d.BigCode || !d.Name || !d.Standard) {
                         this.elementAlert('提示信息', '第 ' + (i+1) + ' 表单未填写完整')
                         return
                     }
@@ -201,129 +134,8 @@
             deleteGood(index, good) {
                 this.purchaseList.splice(index, 1)
             },
-            //切换编码类型
-            changeCodeType(e) {
-                console.log(e)
-                this.purchaseList = []
-                this.getMaterielCode()
-                this.goods = []
-                this.goods.push(_cloneObj(meteriel))
-            },
-            //获取物料编码
-            getMaterielCode() {
-                var that = this
-                let url = ''
-                this.codeType == '2' ? url = jinDomarn + 'OfficeSupply/ReadType' : url = '/ItemCodeAdd/GetAllMaterialCode'
-                if (this.codeType == '2') {
-                    that.bigCodes = [
-                        {
-                            "materialCodeNumber": "60",
-                            "materialName": "办公用品",
-                            "smallMaterialCodes": [
-                                {
-                                    "materialCodeNumber": "000",
-                                    "materialName": "文件档案管理类"
-                                },
-                                {
-                                    "materialCodeNumber": "001",
-                                    "materialName": "桌面用品"
-                                },
-                                {
-                                    "materialCodeNumber": "002",
-                                    "materialName": "办公本薄"
-                                },
-                                {
-                                    "materialCodeNumber": "003",
-                                    "materialName": "书写修正用品"
-                                },
-                                {
-                                    "materialCodeNumber": "004",
-                                    "materialName": "财务用品"
-                                },
-                                {
-                                    "materialCodeNumber": "005",
-                                    "materialName": "辅助用品"
-                                },
-                                {
-                                    "materialCodeNumber": "006",
-                                    "materialName": "电脑周边用品"
-                                },
-                                {
-                                    "materialCodeNumber": "040",
-                                    "materialName": "打印耗材"
-                                },
-                                {
-                                    "materialCodeNumber": "041",
-                                    "materialName": "装订耗材"
-                                },
-                                {
-                                    "materialCodeNumber": "042",
-                                    "materialName": "办公用纸"
-                                },
-                                {
-                                    "materialCodeNumber": "043",
-                                    "materialName": "IT耗材"
-                                },
-                                {
-                                    "materialCodeNumber": "080",
-                                    "materialName": "日用品"
-                                },
-                                {
-                                    "materialCodeNumber": "081",
-                                    "materialName": "清洁用品"
-                                },
-                                {
-                                    "materialCodeNumber": "120",
-                                    "materialName": "事务设备"
-                                },
-                                {
-                                    "materialCodeNumber": "121",
-                                    "materialName": "IT设备"
-                                },
-                                {
-                                    "materialCodeNumber": "122",
-                                    "materialName": "办公电器"
-                                },
-                                {
-                                    "materialCodeNumber": "160",
-                                    "materialName": "办公家具"
-                                }
-                            ]
-                        }
-                    ]
-                    return
-                }
-                
-                this._getData(url, function (res) {
-                    that.bigCodes = res.data
-                    //that.loadReApprovalData()
-                })
-            },
-            //选择大类获取小类
-            changeBigCode(good) {
-                for (let c of this.bigCodes) {
-                    if (c.materialCodeNumber == good.BigCode) {
-                        good['BigCodeName'] = c.materialName
-                        this.smallMaterialCodes = c.smallMaterialCodes
-                    }
-                }
-            },
-            //选择小类
-            changeSmallCode(good) {
-                for (let c of this.bigCodes) {
-                    for (let s of this.smallMaterialCodes) {
-                        if (c.materialCodeNumber == good.BigCode && s.materialCodeNumber == good.SmallCode) {
-                            good['SmallCodeName'] = s.materialName
-                        }
-                    }
-                }
-                let a = this.goods[0].Remark
-                this.goods[0].Remark = Math.random() + ''
-                this.goods[0].Remark = a
-            },
         },
         created: function () {
-            this.getMaterielCode()
             this.initStart()
         }
     })
