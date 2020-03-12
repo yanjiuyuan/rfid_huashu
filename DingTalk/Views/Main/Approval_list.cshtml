@@ -181,12 +181,24 @@
                         loadPage('/Main/approval_intoStorage' + _formatQueryStr(param))
                         return
                     }
+                    if (row.FlowId == 30) {
+                        loadPage('/Main/approval_goOut' + _formatQueryStr(param))
+                        return
+                    }
                     if (row.FlowId == 31) {
                         loadPage('/Main/approval_createProject' + _formatQueryStr(param))
                         return
                     }
+                    if (row.FlowId == 32) {
+                        loadPage('/Main/approval_crossHelp' + _formatQueryStr(param))
+                        return
+                    }
                     if (row.FlowId == 33) {
                         loadPage('/Main/approval_changePaper' + _formatQueryStr(param))
+                        return
+                    }
+                    if (row.FlowId == 35) {
+                        loadPage('/Main/approval_letGoodsGo' + _formatQueryStr(param))
                         return
                     }
                     if (row.FlowId == 67) {
@@ -195,6 +207,10 @@
                     }
                     if (row.FlowId == 68) {
                         loadPage('/Main/approval_maintain' + _formatQueryStr(param))
+                        return
+                    }
+                    if (row.FlowId == 78) {
+                        loadPage('/Main/approval_gift' + _formatQueryStr(param))
                         return
                     }
                     loadPage('/Main/approval_detail' + _formatQueryStr(param))
