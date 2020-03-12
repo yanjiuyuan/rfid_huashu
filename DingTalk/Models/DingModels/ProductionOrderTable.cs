@@ -87,6 +87,12 @@ namespace DingTalk.Models.DingModels
         [StringLength(500)]
         public string ExpectPurpose { get; set; }
 
+        /// <summary>
+        /// 进度
+        /// </summary>
+        [StringLength(100)]
+        public string Progress { get; set; }
+
         [NotMapped]
         public List<ProductionOrderDetail> ProductionOrderDetails { get; set; }
     }
