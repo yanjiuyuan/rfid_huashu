@@ -129,6 +129,34 @@ namespace DingTalk.Controllers
                 throw ex;
             }
         }
+
+
+        /// <summary>
+        /// 数据查询
+        /// </summary>
+        /// <param name="type">流程类别(0,1,2 分别表示 生产指令单、生产预投单、小批量试制预投报告)</param>
+        /// <param name="progress">进度</param>
+        /// <returns></returns>
+        //[Route("Query")]
+        //[HttpGet]
+        //public NewErrorModel Query(int type,string progress)
+        //{
+        //    try
+        //    {
+        //        DDContext dDContext = new DDContext();
+        //        ProductionOrderTable productionOrderTable = dDContext.ProductionOrderTable.Where(t => t.TaskId == taskId).FirstOrDefault();
+        //        productionOrderTable.ProductionOrderDetails = dDContext.ProductionOrderDetail.Where(t => t.TaskId == taskId).ToList();
+        //        return new NewErrorModel()
+        //        {
+        //            data = productionOrderTable,
+        //            error = new Error(0, "读取成功！", "") { },
+        //        };
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        throw ex;
+        //    }
+        //}
     }
 
     public class ProductionOrderPrintModel

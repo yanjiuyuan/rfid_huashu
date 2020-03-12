@@ -77,7 +77,7 @@ namespace Common.PDF
                 imageLogo.SetAbsolutePosition(85, 780);
                 writer.DirectContent.AddImage(imageLogo);
 
-                AddHeaderTitleContent("泉州华中科技大学智能制造研究院", fontSmallest, 80);
+                AddHeaderTitleContent("泉州华数机器人有限公司", fontSmallest, 80);
                 CreateEmptyRow(1);//生成一行空行
                 CreateLine();//生成一条下横线
                 //CreateEmptyRow(1);//生成一行空行
