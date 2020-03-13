@@ -2922,8 +2922,8 @@ namespace DingTalk.Controllers
                     tasksStates = dDContext.TasksState.Where(t => t.TaskId == taskId).ToList();
                     tasksAll = dDContext.Tasks.Where(t => t.TaskId.ToString() == taskId).ToList();
                 }
-                List<TasksState> tasksStatesMove = new List<TasksState>();
 
+                List<TasksState> tasksStatesMove = new List<TasksState>();
                 //清理重复数据
                 List<string> taskIdList = new List<string>();
                 foreach (var item in tasksStates)
