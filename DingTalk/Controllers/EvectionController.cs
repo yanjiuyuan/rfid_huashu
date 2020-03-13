@@ -19,6 +19,7 @@ using Common.ClassChange;
 using DingTalk.Bussiness.FlowInfo;
 using System.Web;
 using Common.Excel;
+using System.Threading;
 
 namespace DingTalk.Controllers
 {
@@ -129,9 +130,9 @@ namespace DingTalk.Controllers
                 {
 
                     List<Evection> evectionsPro = new List<Evection>();
-                    List<Tasks> tasks = FlowInfoServer.ReturnUnFinishedTaskIdByFlowName("外出申请").Where(t => t.NodeId == 0).ToList() ;
+                    List<Tasks> tasks = FlowInfoServer.ReturnUnFinishedTaskIdByFlowName("外出申请").Where(t => t.NodeId == 0).ToList();
                     List<Evection> evections = context.Evection.ToList();
-                    List<Evection> evectionPro = new List<Evection> ();
+                    List<Evection> evectionPro = new List<Evection>();
                     List<Evection> evectionProP = new List<Evection>();
                     DateTime dateTime = new DateTime();
                     foreach (var item in evections)
@@ -163,13 +164,13 @@ namespace DingTalk.Controllers
                     string path = HttpContext.Current.Server.MapPath(string.Format("~/UploadFile/Excel/Templet/{0}.xlsx", "外出数据导出模板"));
                     string time = DateTime.Now.ToString("yyyyMMddHHmmss");
                     string newPath = HttpContext.Current.Server.MapPath("~/UploadFile/Excel/Templet") + "\\" + "外出数据" + time + ".xlsx";
-                    File.Copy(path, newPath,true);
+                    File.Copy(path, newPath, true);
 
                     if (ExcelHelperByNPOI.UpdateExcel(newPath, "Sheet1", dtpurchaseTables, 0, 1))
                     {
                         DingTalkServersController dingTalkServersController = new DingTalkServersController();
                         //上盯盘 
-                        var resultUploadMedia = await dingTalkServersController.UploadMedia("~/UploadFile/Excel/Templet/" + "\\" + "外出数据"+ time + ".xlsx");
+                        var resultUploadMedia = await dingTalkServersController.UploadMedia("~/UploadFile/Excel/Templet/" + "\\" + "外出数据" + time + ".xlsx");
                         //推送用户
                         FileSendModel fileSendModel = JsonConvert.DeserializeObject<FileSendModel>(resultUploadMedia);
                         fileSendModel.UserId = userId;
@@ -223,8 +224,8 @@ namespace DingTalk.Controllers
 
                     Dictionary<string, string> keyValuePairs = new Dictionary<string, string>();
 
-                   
-                    keyValuePairs.Add("外出人员", tasks.ApplyMan +  (string.IsNullOrEmpty(ct.EvectionMan)?"":","+ ct.EvectionMan));
+
+                    keyValuePairs.Add("外出人员", tasks.ApplyMan + (string.IsNullOrEmpty(ct.EvectionMan) ? "" : "," + ct.EvectionMan));
                     keyValuePairs.Add("外出地点", ct.Place);
                     keyValuePairs.Add("开始时间", ct.BeginTime);
                     keyValuePairs.Add("结束时间", ct.EndTime);
@@ -278,5 +279,35 @@ namespace DingTalk.Controllers
             }
         }
 
+        /// <summary>
+        /// 外出数据补偿线程
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet]
+        public NewErrorModel AsyncData()
+        {
+            try
+            {
+                DDContext dDContext = new DDContext();
+                while (true)
+                {
+                    List<Evection> evections = dDContext.Database.SqlQuery<Evection>("select * from Evection where ContactPeople is null").ToList();
+                    if (evections.Count > 0)
+                    {
+                        foreach (var item in evections)
+                        {
+                            item.ContactPeople = "";
+                            dDContext.Entry<Evection>(item).State = EntityState.Modified;
+                        }
+                        dDContext.SaveChanges();
+                    }
+                    Thread.Sleep(3000);
+                }
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
     }
 }

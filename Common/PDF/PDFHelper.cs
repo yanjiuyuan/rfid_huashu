@@ -56,10 +56,11 @@ namespace Common.PDF
         /// <param name="dtApproveView">审批意见数据</param>
         ///  <param name="keyValuePairs">表单单列数据</param>
         ///  <param name="keyValuePairsHead">表单单列列头数据</param>
+       ///  <param name="keyValuePairsHead">项目或者合同</param>
         public string GeneratePDF(string FlowName, string TaskId, string ApplyName, string Dept,
             string ApplyTime, string ProjectName, string ProjectNo, string ImageNo, float ImageX, float ImageY
             , List<string> contentList, float[] contentWithList
-            , DataTable dtSourse, DataTable dtApproveView, Dictionary<string, string> keyValuePairs, Dictionary<string, string> keyValuePairsHead = null)
+            , DataTable dtSourse, DataTable dtApproveView, Dictionary<string, string> keyValuePairs, Dictionary<string, string> keyValuePairsHead = null,bool IsProject=true)
         {
             doc = new Document(PageSize.A4);
             try
@@ -87,7 +88,16 @@ namespace Common.PDF
 
                 if (!string.IsNullOrEmpty(TaskId)) { AddPartnerContents("   流水号", TaskId, "申请人", ApplyName); }
                 if (!string.IsNullOrEmpty(TaskId)) { AddPartnerContents("申请时间", ApplyTime.Substring(0, 10), "申请部门", Dept); }
-                if (!string.IsNullOrEmpty(ProjectName)) { AddSinglePartnerContents("项目", ProjectNo + "-" + ProjectName); }
+                if (!string.IsNullOrEmpty(ProjectName)) {
+                    if (IsProject)
+                    {
+                        AddSinglePartnerContents("项目", ProjectNo + "-" + ProjectName);
+                    }
+                    else
+                    {
+                        AddSinglePartnerContents("合同", ProjectNo + "-" + ProjectName);
+                    }
+                }
                 if (keyValuePairsHead != null)
                 {
                     foreach (var item in keyValuePairsHead.Keys)

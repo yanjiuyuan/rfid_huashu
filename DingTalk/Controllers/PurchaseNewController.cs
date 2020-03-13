@@ -13,6 +13,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
+using System.Diagnostics.Contracts;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -24,7 +25,7 @@ using System.Web.Http;
 namespace DingTalk.Controllers
 {
     /// <summary>
-    /// 采购管理
+    /// 采购(新)
     /// </summary>
     [RoutePrefix("PurchaseNew")]
     public class PurchaseNewController : ApiController
@@ -36,67 +37,105 @@ namespace DingTalk.Controllers
         /// <returns></returns>
         [Route("SavePurchaseTable")]
         [HttpPost]
-        public NewErrorModel SavePurchaseTable([FromBody]List<PurchaseTable> purchaseTableList)
+        public NewErrorModel SavePurchaseTable([FromBody] List<PurchaseTable> purchaseTableList)
         {
             try
             {
                 using (DDContext context = new DDContext())
                 {
-                    EFHelper<PurchaseTable> eFHelper = new EFHelper<PurchaseTable>();
-                    if (purchaseTableList.Count == 0)
+                    foreach (PurchaseTable purchaseTable in purchaseTableList)
                     {
-                        return new NewErrorModel()
-                        {
-                            error = new Error(1, "未接收到传递参数", "") { },
-                        };
+                        context.PurchaseTable.Add(purchaseTable);
+                        context.SaveChanges();
                     }
-                    else
-                    {
-                        foreach (var item in purchaseTableList)
-                        {
-                            eFHelper.Add(item);
-                        }
-                    }
-
                 }
                 return new NewErrorModel()
                 {
-                    error = new Error(0, "保存成功!", "") { },
+                    error = new Error(0, "保存成功！", "") { },
                 };
             }
             catch (Exception ex)
             {
-                throw ex;
+                return new NewErrorModel()
+                {
+                    error = new Error(2, ex.Message, "") { },
+                };
             }
         }
+
 
         /// <summary>
         /// 采购表单读取
         /// </summary>
+        /// <param name="TaskId">流水号</param>
+        /// <param name="PurchaseManId">采购员Id名称(可不传)</param>
         /// <returns></returns>
-        /// 测试数据：/Purchase/ReadPurchaseTable?TaskId=3
         [Route("ReadPurchaseTable")]
         [HttpGet]
-        public NewErrorModel PurseTableRead(string TaskId)
+        public NewErrorModel PurseTableRead(string TaskId, string PurchaseManId = "")
         {
             try
             {
                 List<PurchaseTable> PurchaseTableList = new List<PurchaseTable>();
                 using (DDContext context = new DDContext())
                 {
-                    PurchaseTableList = context.PurchaseTable.Where
-                         (p => p.TaskId == TaskId).ToList();
-                }
+                    if (string.IsNullOrEmpty(PurchaseManId))
+                    {
+                        PurchaseTableList = context.PurchaseTable.Where
+                       (p => p.TaskId == TaskId).ToList();
+                    }
+                    else
+                    {
+                        PurchaseTableList = context.PurchaseTable.Where
+                      (p => p.TaskId == TaskId && p.PurchaseManId == PurchaseManId).ToList();
+                    }
 
+                }
                 return new NewErrorModel()
                 {
-                    data= PurchaseTableList,
-                    error = new Error(0, "读取成功!", "") { },
+                    data = PurchaseTableList,
+                    error = new Error(0, "保存成功！", "") { },
                 };
             }
             catch (Exception ex)
             {
-                throw ex;
+                return new NewErrorModel()
+                {
+                    error = new Error(2, ex.Message, "") { },
+                };
+            }
+        }
+
+        /// <summary>
+        /// 采购表单批量修改
+        /// </summary>
+        /// <param name="purchaseTableList"></param>
+        /// <returns></returns>
+        [Route("ModifyPurchaseTable")]
+        [HttpPost]
+        public NewErrorModel ModifyPurchaseTable([FromBody] List<PurchaseTable> purchaseTableList)
+        {
+            try
+            {
+                using (DDContext context = new DDContext())
+                {
+                    foreach (PurchaseTable purchaseTable in purchaseTableList)
+                    {
+                        context.Entry<PurchaseTable>(purchaseTable).State = System.Data.Entity.EntityState.Modified;
+                        context.SaveChanges();
+                    }
+                }
+                return new NewErrorModel()
+                {
+                    error = new Error(0, "修改成功！", "") { },
+                };
+            }
+            catch (Exception ex)
+            {
+                return new NewErrorModel()
+                {
+                    error = new Error(2, ex.Message, "") { },
+                };
             }
         }
 
@@ -125,17 +164,19 @@ namespace DingTalk.Controllers
                 {
                     var Quary = context.KisPurchase.Where(k => k.FName.Contains(Key) ||
                     k.FNumber.Contains(Key) || k.FModel.Contains(Key)).ToList();
-
                     return new NewErrorModel()
                     {
                         data = Quary,
-                        error = new Error(0, "读取成功!", "") { },
+                        error = new Error(0, "读取成功！", "") { },
                     };
                 }
             }
             catch (Exception ex)
             {
-                throw ex;
+                return new NewErrorModel()
+                {
+                    error = new Error(2, ex.Message, "") { },
+                };
             }
         }
 
@@ -167,7 +208,10 @@ namespace DingTalk.Controllers
             }
             catch (Exception ex)
             {
-                throw ex;
+                return new NewErrorModel()
+                {
+                    error = new Error(1, ex.Message, "") { },
+                };
             }
         }
 
@@ -178,7 +222,7 @@ namespace DingTalk.Controllers
         /// <returns></returns>
         [Route("SynchroData")]
         [HttpGet]
-        public NewErrorModel SynchroData(int State)
+        public object SynchroData(int State)
         {
             try
             {
@@ -199,28 +243,18 @@ namespace DingTalk.Controllers
                             //构造数据
                             foreach (var item in t_ICItemList)
                             {
-                                KisPurchase kisPurchase = new KisPurchase()
+                                KisPurchaseList.Add(new KisPurchase()
                                 {
                                     FNumber = item.FNumber,
                                     FItemID = item.FItemID.ToString(),
                                     FNote = item.FNote,
                                     FModel = item.FModel,
                                     FName = item.FName
-                                };
-                                DDcontext.KisPurchase.Add(kisPurchase);
-                                DDcontext.SaveChanges();
-                                //KisPurchaseList.Add(new KisPurchase()
-                                //{
-                                //    FNumber = item.FNumber,
-                                //    FItemID = item.FItemID.ToString(),
-                                //    FNote = item.FNote,
-                                //    FModel = item.FModel,
-                                //    FName = item.FName
-                                //});
+                                });
                             }
                             //批量插入
-                            //DDcontext.BulkInsert(KisPurchaseList);
-                            //DDcontext.BulkSaveChanges();
+                            DDcontext.BulkInsert(KisPurchaseList);
+                            DDcontext.BulkSaveChanges();
                             count = t_ICItemList.Count();
                         }
                     }
@@ -274,7 +308,10 @@ namespace DingTalk.Controllers
             }
             catch (Exception ex)
             {
-                throw ex;
+                return new NewErrorModel()
+                {
+                    error = new Error(2, ex.Message, "") { },
+                };
             }
         }
 
@@ -294,103 +331,216 @@ namespace DingTalk.Controllers
             {
                 string TaskId = printAndSendModel.TaskId;
                 string UserId = printAndSendModel.UserId;
-                PDFHelper pdfHelper = new PDFHelper();
                 using (DDContext context = new DDContext())
                 {
-                    //获取表单信息
-                    Tasks tasks = context.Tasks.Where(t => t.TaskId.ToString() == TaskId && t.NodeId == 0).First();
-                    string FlowId = tasks.FlowId.ToString();
-                    string ProjectId = tasks.ProjectId;
                     //判断流程是否已结束
                     List<Tasks> tasksList = context.Tasks.Where(t => t.TaskId.ToString() == TaskId && t.State == 0 && t.IsSend == false).ToList();
                     if (tasksList.Count > 0)
                     {
                         return new NewErrorModel()
                         {
-                            error = new Error(1, "流程未结束！", "") { },
+                            error = new Error(1, "流程未结束!", "") { },
                         };
                     }
 
-                    List<PurchaseTable> PurchaseTableList = context.PurchaseTable.Where(u => u.TaskId == TaskId).ToList();
 
-                    var SelectPurchaseList = from p in PurchaseTableList
-                                             select new
-                                             {
-                                                 p.CodeNo,
-                                                 p.Name,
-                                                 p.Standard,
-                                                 p.Unit,
-                                                 p.Count,
-                                                 p.Price,
-                                                 p.Purpose,
-                                                 p.UrgentDate,
-                                                 p.Mark
-                                             };
-                    DataTable dtSourse = DtLinqOperators.CopyToDataTable(SelectPurchaseList);
-                    //ClassChangeHelper.ToDataTable(SelectPurchaseList);
-                    List<NodeInfo> NodeInfoList = context.NodeInfo.Where(u => u.FlowId == FlowId && u.NodeId != 0 && u.IsSend != true && u.NodeName != "结束").ToList();
-                    foreach (NodeInfo nodeInfo in NodeInfoList)
+                    List<Roles> roles = context.Roles.Where(r => r.RoleName.Contains("物料采购员")).ToList();
+
+                    //获取表单信息
+                    Tasks tasksApplyMan = context.Tasks.Where(t => t.TaskId.ToString() == TaskId && t.NodeId == 0).First();
+                    string FlowId = tasksApplyMan.FlowId.ToString();
+
+                    string NodeId = "";
+                    if (FlowId == "24")  //零部件
                     {
-                        if (string.IsNullOrEmpty(nodeInfo.NodePeople))
+                        NodeId = "7";
+                    }
+                    else
+                    {
+                        NodeId = "6";
+                    }
+
+                    List<Tasks> tasks = context.Tasks.Where(t => t.TaskId.ToString() == TaskId && t.NodeId.ToString() == NodeId).ToList();
+                    List<Roles> rolesList = new List<Roles>();
+                    foreach (var task in tasks)
+                    {
+                        foreach (var role in roles)
                         {
-                            string strNodePeople = context.Tasks.Where(q => q.TaskId.ToString() == TaskId && q.NodeId == nodeInfo.NodeId).First().ApplyMan;
-                            string ApplyTime = context.Tasks.Where(q => q.TaskId.ToString() == TaskId && q.NodeId == nodeInfo.NodeId).First().ApplyTime;
-                            nodeInfo.NodePeople = strNodePeople + "  " + ApplyTime;
-                        }
-                        else
-                        {
-                            string ApplyTime = context.Tasks.Where(q => q.TaskId.ToString() == TaskId && q.NodeId == nodeInfo.NodeId).First().ApplyTime;
-                            nodeInfo.NodePeople = nodeInfo.NodePeople + "  " + ApplyTime;
+                            if (task.ApplyManId == role.UserId)
+                            {
+                                rolesList.Add(role);
+                            }
                         }
                     }
-                    DataTable dtApproveView = ClassChangeHelper.ToDataTable(NodeInfoList);
-                    string FlowName = context.Flows.Where(f => f.FlowId.ToString() == FlowId).First().FlowName.ToString();
-                    ProjectInfo projectInfo = context.ProjectInfo.Where(p => p.ProjectId == ProjectId).First();
-                    string ProjectName = projectInfo.ProjectName;
-                    string ProjectNo = projectInfo.ProjectId;
-
-                    //绘制BOM表单PDF
-                    List<string> contentList = new List<string>()
-                        {
-                            "序号","物料编码","物料名称","规格型号","单位","数量","单价","用途","需用日期","备注"
-                        };
-
-                    float[] contentWithList = new float[]
+                    foreach (var item in rolesList)
                     {
-                        50, 60, 60, 60, 60, 60, 60, 60, 60,60
-                    };
-
-                    string path = pdfHelper.GeneratePDF(FlowName, TaskId, tasks.ApplyMan, tasks.Dept, tasks.ApplyTime,
-                    ProjectName, ProjectNo, "2", 300, 650, contentList, contentWithList, dtSourse, dtApproveView, null);
-                    string RelativePath = "~/UploadFile/PDF/" + Path.GetFileName(path);
-
-                    List<string> newPaths = new List<string>();
-                    RelativePath = AppDomain.CurrentDomain.BaseDirectory + RelativePath.Substring(2, RelativePath.Length - 2).Replace('/', '\\');
-                    newPaths.Add(RelativePath);
-                    string SavePath = string.Format(@"{0}\UploadFile\Ionic\{1}.zip", AppDomain.CurrentDomain.BaseDirectory, FlowName + DateTime.Now.ToString("yyyyMMddHHmmss"));
-                    //文件压缩打包
-                    IonicHelper.CompressMulti(newPaths, SavePath, false);
-
-                    //上传盯盘获取MediaId
-                    SavePath = string.Format(@"~\UploadFile\Ionic\{0}", Path.GetFileName(SavePath));
-                    DingTalkServersController dingTalkServersController = new DingTalkServersController();
-                    var resultUploadMedia = await dingTalkServersController.UploadMedia(SavePath);
-                    //推送用户
-                    FileSendModel fileSendModel = JsonConvert.DeserializeObject<FileSendModel>(resultUploadMedia);
-                    fileSendModel.UserId = UserId;
-                    var result = await dingTalkServersController.SendFileMessage(fileSendModel);
+                        await PrintPDF(context, item.UserId, TaskId, UserId);
+                    }
 
                     return new NewErrorModel()
                     {
-                        error = new Error(0, result, "") { },
+                        error = new Error(0, "打印推送成功！", "") { },
                     };
                 }
+
             }
             catch (Exception ex)
             {
-                throw ex;
+                return new NewErrorModel()
+                {
+                    error = new Error(2, ex.Message, "") { },
+                };
             }
         }
+
+        public async Task<NewErrorModel> PrintPDF(DDContext context, string ApplyManId, string TaskId, string UserId)
+        {
+            try
+            {
+                //获取表单信息
+                Tasks tasks = context.Tasks.Where(t => t.TaskId.ToString() == TaskId && t.NodeId == 0).First();
+                string FlowId = tasks.FlowId.ToString();
+                string ProjectId = tasks.ProjectId;   //项目或合同Id
+                PDFHelper pdfHelper = new PDFHelper();
+                List<PurchaseTable> purchaseTableList = context.PurchaseTable.Where(u => u.TaskId == TaskId).ToList();
+                var SelectPurchaseListOne = from p in purchaseTableList
+                                            where p.PurchaseManId == ApplyManId
+                                            select new
+                                            {
+                                                p.CodeNo,
+                                                p.Name,
+                                                p.Standard,
+                                                p.Price, //预计价格
+                                                p.Unit,
+                                                p.Count,
+                                                p.UrgentDate, //需用日期
+                                                p.SendPosition, //送货地点
+                                                p.Purpose,
+                                                p.Mark
+                                            };
+
+                DataTable dtSourse = DtLinqOperators.CopyToDataTable(SelectPurchaseListOne);
+                List<NodeInfo> NodeInfoList = context.NodeInfo.Where(u => u.FlowId == FlowId && u.NodeId != 0 && u.IsSend != true && u.NodeName != "结束").ToList();
+
+                foreach (NodeInfo nodeInfo in NodeInfoList)
+                {
+                    //临时用作备注
+                    nodeInfo.PreNodeId = context.Tasks.Where(t => t.TaskId.ToString() == tasks.TaskId.ToString()
+                      && t.NodeId == nodeInfo.NodeId).FirstOrDefault().Remark;
+
+                    if (!string.IsNullOrEmpty(nodeInfo.NodePeople))
+                    {
+                        if (nodeInfo.NodePeople.Length > 3)
+                        {
+                            nodeInfo.NodePeople = nodeInfo.NodePeople.Substring(0, 3);
+                        }
+                    }
+
+                    if (nodeInfo.NodeName.ToString() == "采购员采购")
+                    {
+                        nodeInfo.NodePeople = "";
+                    }
+                    if (string.IsNullOrEmpty(nodeInfo.NodePeople))
+                    {
+                        string strNodePeople = "";
+                        string ApplyTime = "";
+                        if (nodeInfo.NodeName.ToString() == "采购员采购")
+                        {
+                            strNodePeople = context.Tasks.Where(q => q.TaskId.ToString() == TaskId && q.NodeId == nodeInfo.NodeId && q.ApplyManId == ApplyManId).First().ApplyMan;
+                            ApplyTime = context.Tasks.Where(q => q.TaskId.ToString() == TaskId && q.NodeId == nodeInfo.NodeId && q.ApplyManId == ApplyManId).First().ApplyTime;
+                        }
+                        else
+                        {
+                            strNodePeople = context.Tasks.Where(q => q.TaskId.ToString() == TaskId && q.NodeId == nodeInfo.NodeId).First().ApplyMan;
+                            ApplyTime = context.Tasks.Where(q => q.TaskId.ToString() == TaskId && q.NodeId == nodeInfo.NodeId).First().ApplyTime;
+                        }
+                        nodeInfo.NodePeople = strNodePeople + "  " + ApplyTime;
+                    }
+                    else
+                    {
+                        string ApplyTime = context.Tasks.Where(q => q.TaskId.ToString() == TaskId && q.NodeId == nodeInfo.NodeId).First().ApplyTime;
+                        nodeInfo.NodePeople = nodeInfo.NodePeople + "  " + ApplyTime;
+                    }
+                }
+                DataTable dtApproveView = ClassChangeHelper.ToDataTable(NodeInfoList);
+                NodeInfoList.Clear();
+                string FlowName = context.Flows.Where(f => f.FlowId.ToString() == FlowId).First().FlowName.ToString();
+                string ProjectName = "";
+                string ProjectNo = "";
+                if (FlowId == "24") //零部件
+                {
+                    ProjectInfo projectInfo = context.ProjectInfo.Where(p => p.ProjectId == ProjectId).First();
+                    ProjectName = projectInfo.ProjectName;
+                    ProjectNo = projectInfo.ProjectId;
+                }
+                else
+                {
+                    Models.DingModels.Contract contract = context.Contract.Where(p => p.ContractNo == ProjectId).First();
+                    ProjectName = contract.ContractName;
+                    ProjectNo = contract.ContractNo;
+                }
+
+
+
+                //绘制BOM表单PDF
+                List<string> contentList = new List<string>()
+                        {
+                            "序号","物料编码","物料名称","规格型号","预计单价","单位","数量","需用日期","送货地点","用途","备注"
+                        };
+
+                float[] contentWithList = new float[]
+                {
+                 50, 60, 60, 100,40, 40,40, 60,40, 40,60
+                };
+                bool IsProject = true;
+                if (FlowId == "24")  //零部件采购
+                {
+                    IsProject = true;
+                }
+                else
+                {
+                    if (FlowId == "26")  //成品采购
+                    {
+                        IsProject = false;
+                    }
+                }
+                string path = pdfHelper.GeneratePDF(FlowName, TaskId, tasks.ApplyMan, tasks.Dept, tasks.ApplyTime,
+                 ProjectName, ProjectNo, "2", 300, 650, contentList, contentWithList, dtSourse, dtApproveView, null, null, IsProject);
+                string RelativePath = "~/UploadFile/PDF/" + Path.GetFileName(path);
+
+                List<string> newPaths = new List<string>();
+                RelativePath = AppDomain.CurrentDomain.BaseDirectory + RelativePath.Substring(2, RelativePath.Length - 2).Replace('/', '\\');
+                newPaths.Add(RelativePath);
+                string SavePath = string.Format(@"{0}\UploadFile\Ionic\{1}.zip", AppDomain.CurrentDomain.BaseDirectory, FlowName + DateTime.Now.ToString("yyyyMMddHHmmss"));
+                //文件压缩打包
+                IonicHelper.CompressMulti(newPaths, SavePath, false);
+
+                //上传盯盘获取MediaId
+                SavePath = string.Format(@"~\UploadFile\Ionic\{0}", Path.GetFileName(SavePath));
+                DingTalkServersController dingTalkServersController = new DingTalkServersController();
+                var resultUploadMedia = await dingTalkServersController.UploadMedia(SavePath);
+                //推送用户
+                FileSendModel fileSendModel = JsonConvert.DeserializeObject<FileSendModel>(resultUploadMedia);
+                fileSendModel.UserId = UserId;
+                var result = await dingTalkServersController.SendFileMessage(fileSendModel);
+
+                return new NewErrorModel()
+                {
+                    data = result,
+                    error = new Error(0, "推送成功！", "") { },
+                };
+            }
+            catch (Exception ex)
+            {
+                return new NewErrorModel()
+                {
+                    error = new Error(2, ex.Message, "") { },
+                };
+            }
+
+        }
+
+
         /// <summary>
         /// 采购管理查询并导出Excel
         /// </summary>
@@ -399,14 +549,34 @@ namespace DingTalk.Controllers
         /// <returns></returns>
         [HttpGet]
         [Route("PrintExcel")]
-        public async Task<object> PrintExcel(string taskId, string UserId)
+        public async Task<NewErrorModel> PrintExcel(string taskId, string UserId)
         {
             try
             {
                 using (DDContext context = new DDContext())
                 {
                     List<PurchaseTable> purchaseTables = context.PurchaseTable.Where(p => p.TaskId == taskId).ToList();
-                    DataTable dtpurchaseTables = ClassChangeHelper.ToDataTable(purchaseTables);
+                    //DataTable dtpurchaseTables = ClassChangeHelper.ToDataTable(purchaseTables);
+                    var SelectPurchaseList = from p in purchaseTables
+                                             select new
+                                             {
+                                                 p.Id,
+                                                 p.TaskId,
+                                                 p.CodeNo,
+                                                 p.Name,
+                                                 Type = p.Standard,
+                                                 p.Unit,
+                                                 p.Count,
+                                                 p.Price,
+                                                 p.Purpose,
+                                                 p.UrgentDate,
+                                                 p.Mark,
+                                                 p.SendPosition,
+                                                 p.PurchaseMan,
+                                                 p.purchaseType
+                                             };
+                    DataTable dtpurchaseTables = DtLinqOperators.CopyToDataTable(SelectPurchaseList);
+
 
                     string path = HttpContext.Current.Server.MapPath("~/UploadFile/Excel/Templet/采购导出模板.xlsx");
                     string time = DateTime.Now.ToString("yyyyMMddHHmmss");
@@ -423,7 +593,7 @@ namespace DingTalk.Controllers
                         var result = await dingTalkServersController.SendFileMessage(fileSendModel);
                         return new NewErrorModel()
                         {
-                            error = new Error(0, result, "") { },
+                            error = new Error(0, result, "Excel已推送至您的钉钉") { },
                         };
                     }
                     else
@@ -433,12 +603,14 @@ namespace DingTalk.Controllers
                             error = new Error(1, "文件有误", "") { },
                         };
                     }
-
                 }
             }
             catch (Exception ex)
             {
-                throw ex;
+                return new NewErrorModel()
+                {
+                    error = new Error(2, ex.Message, "") { },
+                };
             }
         }
     }
