@@ -177,6 +177,16 @@
                 }
                 that.approvalSubmit(callBack)
             },
+            //下拉框选择合同
+            selectProject(id) {
+                console.log(id)
+                for (var proj of this.projectList) {
+                    if (proj.ContractNo == id) {
+                        this.ruleForm.ProjectName = proj.ContractType
+                    }
+                }
+
+            },
             //搜索物料列表
             searchCode(formName) {
                 var that = this
