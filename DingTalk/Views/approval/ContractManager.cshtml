@@ -27,7 +27,7 @@
                 <span>{{ResponsibleMan[0].name}} &nbsp;</span>
                 <el-button class="button-new-tag" size="small" v-on:click="addMan">+ 选择</el-button>
             </el-form-item>
-            <el-form-item label="合同类型">
+            <el-form-item label="合同类型" prop="ContractType">
                 <el-select v-model="ruleForm.ContractType" placeholder="请选择" style="width:400px;">
                     <el-option v-for="item in types"
                                :key="item"
@@ -91,6 +91,11 @@
                     SalesManagerId: '',
                     ContractType: '',
                 },
+                rules: {
+                    ContractNo: { required: true, message: '合同编号不能为空', trigger: 'blur' },
+                    ContractName: { required: true, message: '合同名称不能为空', trigger: 'blur' },
+                    ContractType: [{ required: true, message: '合同类型不能为空', trigger: 'blur' }]
+                },
                 types: ['工业自动化', '数控系统', '散件', '教育', '易货', '售后服务'],
                 data: []
             }
@@ -104,7 +109,7 @@
                 this.ruleForm.SalesManagerId = this.ResponsibleMan[0].emplId
                 console.log(this.ruleForm)
                 this.$refs['ruleForm'].validate((valid) => {
-                    if (valid) {
+                    if (valid && that.ruleForm.SalesManagerId) {
                         that._postData('/ContractManager/Add?ApplyManId=manager325', function (data) {
                             that.$alert('恭喜提交成功', '提示信息', {
                                 confirmButtonText: '确定',
@@ -113,6 +118,10 @@
                                 }
                             })
                         }, that.ruleForm)
+                    } else {
+                        that.$alert('表单信息不全或有误', '提示信息', {
+                            confirmButtonText: '确定'
+                        })
                     }
                 })
 
