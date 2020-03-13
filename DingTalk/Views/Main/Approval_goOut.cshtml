@@ -1,7 +1,5 @@
 ﻿@{
-                /**/
-
-                Layout = null;
+    Layout = null;
 }
 
 <!--右侧实体内容-->
@@ -37,8 +35,9 @@
         <el-form-item label="时长/小时">
             <el-input v-model="tableForm.Duration" :disabled="true"></el-input>
         </el-form-item>
-        <el-form-item label="接触人员">
-            <el-input v-model="tableForm.ContactPeople" :disabled="true"></el-input>
+        <el-form-item label="接触人员" v-if="NodeId >= 2 || state=='已完成'">
+            <el-input v-model="tableForm.ContactPeople" v-if="NodeId == 2 && index == 0"></el-input>
+            <el-input v-model="tableForm.ContactPeople" v-else :disabled="true"></el-input>
         </el-form-item>
         <!--图片展示-->
         <el-form-item v-if="imageList.length > 0" label="外出照片">
@@ -83,12 +82,12 @@
                 this.aggreSubmit()
             },
             getTable() {
-                this.GetData('/Evection/Read' + _formatQueryStr({ TaskId: TaskId }), (res)=> {
+                this.GetData('/Evection/Read' + _formatQueryStr({ TaskId: TaskId }), (res) => {
                     this.tableForm = res
                 })
             },
             printPdf() {
-                this._postData("/Evection/GetPrintPDF",  ()=> {
+                this._postData("/Evection/GetPrintPDF", () => {
                     this.$message({ type: 'success', message: `文件获取成功，请查收` });
                 },
                     {

@@ -9,7 +9,7 @@
         <i class="el-icon-arrow-left"></i>
         {{FlowName}}-{{nodeInfo.NodeName}}
     </div>
-    <el-form v-on:submit.native.prevent :model="ruleForm" :rules="rules" ref="ruleForm" label-width="120px" class="demo-ruleForm">
+    <el-form v-on:submit.native.prevent :model="ruleForm" :inline="true" :rules="rules" ref="ruleForm" label-width="120px" class="demo-ruleForm">
         @RenderPage("~/Views/Shared/startForm.cshtml")
 
         <!--表格實體  -->
@@ -26,11 +26,11 @@
         <hr />
         <!--物料明细-->
         <template v-for="(good,index) in goods">
-            <el-form-item v-for="(g,gk) in good" :key="gk" v-if="needInput.indexOf(gk) >= 0 && meterielConfig[gk]"
+            <el-form-item v-for="(g,gk) in good" :key="gk" v-if="needInput.indexOf(gk) >= 0 && meterielConfig[gk]" width="50"
                           :label="meterielConfig[gk]">
                 <sam-input :value.sync="good[gk]" :required="true"></sam-input>
             </el-form-item>
-            <el-form-item v-for="(g,gk) in good" :key="gk" v-if="needInput.indexOf(gk) <0 && meterielConfig[gk]"
+            <el-form-item v-for="(g,gk) in good" :key="gk" v-if="needInput.indexOf(gk) <0 && meterielConfig[gk]" width="50"
                           :label="meterielConfig[gk]">
                 <sam-input :value.sync="good[gk]"></sam-input>
             </el-form-item>

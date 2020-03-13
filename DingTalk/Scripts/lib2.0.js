@@ -22,6 +22,7 @@ var imageList = []
 var fileList = []
 var pdfList = []
 let jinDomarn = 'http://wuliao5222.55555.io:45578/api/'
+let jinDomarn2 = 'http://wuliao5222.55555.io:35705/api/'//研究院
 //let serverUrl = 'http://17e245o364.imwork.net:49415/'
 let serverUrl = 'http://' + window.location.host + '/'
 let ProjectTypes = ['自研项目', '纵向项目', '横向项目', '测试项目']

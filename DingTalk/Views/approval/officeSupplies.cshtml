@@ -138,7 +138,7 @@
                     this.$message({type: 'error',message: `输入错误` });
                     return
                 }
-                var url = jinDomarn + 'OfficeSupply/GetOfficeInfo?Key=' + this.searchForm.name
+                var url = jinDomarn2 + 'OfficeSupply/GetOfficeInfo?Key=' + this.searchForm.name
                 this._getData(url, (res) => {
                     if (res.data.length == 0) this.$message({ type: 'warning', message: `获取数据数为0` })
                     this.data = res.data
