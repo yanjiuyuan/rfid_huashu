@@ -19,8 +19,8 @@
         <el-table-column prop="UrgentDate" label="需用日期"></el-table-column>
         <el-table-column prop="SendPosition" label="送货地点"></el-table-column>
         <el-table-column prop="Mark" label="备注"></el-table-column>
-        <el-table-column prop="PurchaseMan" v-if="NodeId == !4" label="采购员"></el-table-column>
-        <el-table-column label="采购员" v-if="NodeId == 4" width="120">
+        <el-table-column prop="PurchaseMan" v-if="NodeId > 4 || (NodeId == 4 && index !=0)" label="采购员"></el-table-column>
+        <el-table-column label="采购员" v-if="NodeId == 4 && index == 0" width="120">
             <template slot-scope="scope">
                 <el-select v-model="scope.row.PurchaseManId" placeholder="请选择" v-on:change="choosePeople">
                     <el-option v-for="item in options"
@@ -54,6 +54,7 @@
             <el-input v-model="ruleForm.Remark" :disabled="true" style="width:80%"></el-input>
         </el-form-item>
         @RenderPage("~/Views/Shared/endButton.cshtml")
+        <el-button type="primary" v-on:click="printTable" v-if="state=='已完成'" :disabled="disablePage">打印表单</el-button>
         @*<el-button type="primary" v-on:click="stampAndGet">盖章并获取</el-button>
         <el-button type="primary" v-on:click="printExcel">打印EXCEL</el-button>*@
     </el-form>
@@ -101,7 +102,7 @@
             },
             setChooseMan() {
                 var that = this
-                if (NodeId != 4) return
+                if (NodeId != 4 || Index != 0) return
                 if (this.nodeList && this.nodeList.length == 0) {
                     setTimeout(function () {
                         that.setChooseMan()
@@ -135,6 +136,12 @@
                     }
                 }
             },
+            printTable() {
+                this.PostData('PurchaseNew/PrintAndSend', {
+                    UserId: DingData.userid,
+                    TaskId: TaskId
+                }, () => { this.$message({ type: 'success', message: `获取成功，请在工作通知中查收` }); })
+            },
             getBomInfo() {
                 var that = this
                 var param = {
@@ -160,7 +167,7 @@
 
                     that.GetData("/PurchaseNew/ReadPurchaseTable" + _formatQueryStr(param), function (data) {
                         console.log('获取bom表')
-                        if (NodeId == 4) {
+                        if (NodeId == 4 && Index == 0) {
                             for (let d of data) {
                                 for (let o of that.options) {
 

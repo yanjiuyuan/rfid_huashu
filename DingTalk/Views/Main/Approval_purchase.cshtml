@@ -11,8 +11,8 @@
     <el-table :data="data" border style="width: 100%;margin-bottom:30px">
         <el-table-column v-for="(value,key) in items" :prop="key" :label="value" :key="key">
         </el-table-column>
-        <el-table-column prop="PurchaseMan" v-if="NodeId == !5" label="采购员"></el-table-column>
-        <el-table-column label="采购员" v-if="NodeId == 5" width="120">
+        <el-table-column prop="PurchaseMan" v-if="NodeId > 5 || (NodeId == 5 && index !=0)" label="采购员"></el-table-column>
+        <el-table-column label="采购员" v-if="NodeId == 5 && index == 0" width="120">
             <template slot-scope="scope">
                 <el-select v-model="scope.row.PurchaseManId" placeholder="请选择" v-on:change="choosePeople">
                     <el-option v-for="item in options"
@@ -49,6 +49,7 @@
             <el-input v-model="ruleForm.Remark" :disabled="true" style="width:80%"></el-input>
         </el-form-item>
         @RenderPage("~/Views/Shared/endButton.cshtml")
+        <el-button type="primary" v-on:click="printTable" v-if="state=='已完成'" :disabled="disablePage">打印表单</el-button>
         @*<el-button type="primary" v-on:click="stampAndGet">盖章并获取</el-button>
         <el-button type="primary" v-on:click="printExcel">打印EXCEL</el-button>*@
     </el-form>
@@ -105,7 +106,7 @@
             },
             setChooseMan() {
                 var that = this
-                if (NodeId != 5) return
+                if (NodeId != 5 || Index !=0) return
                 if (this.nodeList && this.nodeList.length == 0) {
                     setTimeout(function () {
                         that.setChooseMan()
@@ -139,6 +140,12 @@
                     }
                 }
             },
+            printTable() {
+                this.PostData('PurchaseNew/PrintAndSend', {
+                    UserId: DingData.userid,
+                    TaskId: TaskId
+                }, () => { this.$message({ type: 'success', message: `获取成功，请在工作通知中查收` }); })
+            },
             getBomInfo() {
                 var that = this
                 var param = {
@@ -167,7 +174,7 @@
                             this.totalPrice = parseFloat((this.totalPrice + p.Price * p.Count).toFixed(2))
                         }
 
-                        if (NodeId == 5) {
+                        if (NodeId == 5 && Index == 0) {
                             for (let d of data) {
                                 for (let o of that.options) {
                                     if (o.name == '巫仕座') {
