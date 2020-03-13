@@ -2957,7 +2957,6 @@ namespace DingTalk.Controllers
                     }
                     Tasks tasksNew = tasksAll.Where(t => t.TaskId == item.TaskId && t.State == 0 && t.IsEnable == 1 && t.IsSend != true).OrderByDescending(t => t.NodeId).FirstOrDefault();
                     Tasks tasksPro = tasksAll.Where(t => t.TaskId == item.TaskId && t.State == 1 && t.IsEnable == 1 && t.IsSend != true).OrderByDescending(t => t.NodeId).FirstOrDefault();
-
                     if (tasksState.State == "已完成")
                     {
                         tasksState.NodeId = nodeInfos.Where(n => n.NodeName == "结束" && n.FlowId == item.FlowId.ToString()).FirstOrDefault().NodeId.ToString();
