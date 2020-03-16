@@ -137,6 +137,7 @@
                 let callBack = function (taskId) {
                     for (let p of that.purchaseList) {
                         p['TaskId'] = taskId
+                        p['fAmount'] = parseInt(p.fQty) * p.fPrice
                     }
                     that.PostData('/Godown/Save', that.purchaseList, function() {
                         that.elementAlert('提示信息', '恭喜提交成功')
