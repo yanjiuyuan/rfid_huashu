@@ -925,6 +925,13 @@
     <Content Include="Views\Main\Approval_goOut.cshtml" />
     <Content Include="Views\Main\Approval_crossHelp.cshtml" />
     <Content Include="Views\Main\Approval_letGoodsGo.cshtml" />
+    <Content Include="Views\approval\Order.cshtml" />
+    <Content Include="Views\approval\PreOrder.cshtml" />
+    <Content Include="Views\approval\Report.cshtml" />
+    <Content Include="Views\approval\OrderManager.cshtml" />
+    <Content Include="Views\Main\Approval_order.cshtml" />
+    <Content Include="Views\Main\Approval_preOrder.cshtml" />
+    <Content Include="Views\Main\Approval_report.cshtml" />
     <None Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
     </None>

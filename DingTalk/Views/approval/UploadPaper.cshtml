@@ -347,6 +347,84 @@
                     a.items = this.items
                 }
             },
+            //PDF上传处理方法
+            beforePdfFileUpload(file) {
+                console.log('before pdf')
+                console.log(file)
+                for (let f of this.fileList) {
+                    if (f.name == file.name) {
+                        this.$alert('不能上传相同名称文件', '上传失败', {
+                            confirmButtonText: '确定',
+                        });
+                        return false
+                    }
+                }
+                for (let f of this.pdfList) {
+                    if (f.name == file.name) {
+                        this.$alert('不能上传相同名称文件', '上传失败', {
+                            confirmButtonText: '确定',
+                        });
+                        return false
+                    }
+                }
+                if (file.name.indexOf(' ') >= 0) {
+                    this.$alert('文件名不能带空格', '上传失败', {
+                        confirmButtonText: '确定',
+                    });
+                    return false
+                }
+                file.name = 'helloWorld'
+                isPdf = true
+                const isPdfType = file.type === 'application/pdf'
+                const isLt2M = file.size / 1024 / 1024 < 10
+                if (!isPdfType) {
+                    this.$message.error('上传图片只能是 PDF 格式!')
+                    return false
+                }
+                if (!isLt2M) {
+                    this.$message.error('上传文件大小不能超过 10MB!')
+                    return false
+                }
+                this.isPdfFile = true
+                return true
+            },
+
+            BeforeFileUpload(file) {
+                console.log('before file')
+                console.log(file)
+                for (let f of this.fileList) {
+                    if (f.name == file.name) {
+                        this.$alert('不能上传相同名称文件', '上传失败', {
+                            confirmButtonText: '确定',
+                        });
+                        return false
+                    }
+                }
+                for (let f of this.pdfList) {
+                    if (f.name == file.name) {
+                        this.$alert('不能上传相同名称文件', '上传失败', {
+                            confirmButtonText: '确定',
+                        });
+                        return false
+                    }
+                }
+                if (file.name.indexOf(' ') >= 0) {
+                    this.$alert('文件名不能带空格', '上传失败', {
+                        confirmButtonText: '确定',
+                    });
+                    return false
+                }
+                file.name = 'helloWorld'
+                isPdf = false
+                const isLt2M = file.size / 1024 / 1024 < 10
+                if (!isLt2M) {
+                    this.$message.error('上传文件大小不能超过 10MB!')
+                    return false
+                }
+                this.isPdfFile = false
+                return true
+            },
+
         },
         created: function () {
             for (let s of this.specialRoles) {

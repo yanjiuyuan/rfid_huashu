@@ -105,5 +105,17 @@ namespace WebZhongZhi.Controllers
         {
             return View();
         }
+        public ActionResult Approval_order()
+        {
+            return View();
+        }
+        public ActionResult Approval_preOrder()
+        {
+            return View();
+        }
+        public ActionResult Approval_report()
+        {
+            return View();
+        }
     }
 }

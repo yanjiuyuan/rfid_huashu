@@ -133,5 +133,21 @@ namespace WebZhongZhi.Controllers
         {
             return View();
         }
+        public ActionResult Order()
+        {
+            return View();
+        }
+        public ActionResult PreOrder()
+        {
+            return View();
+        }
+        public ActionResult Report()
+        {
+            return View();
+        }
+        public ActionResult OrderManager()
+        {
+            return View();
+        }
     }
 }

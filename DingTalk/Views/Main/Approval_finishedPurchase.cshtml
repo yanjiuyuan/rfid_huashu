@@ -55,6 +55,7 @@
         </el-form-item>
         @RenderPage("~/Views/Shared/endButton.cshtml")
         <el-button type="primary" v-on:click="printTable" v-if="state=='已完成'" :disabled="disablePage">打印表单</el-button>
+        <el-button type="primary" v-on:click="printBom" :disabled="disablePage">导出Bom表</el-button>
         @*<el-button type="primary" v-on:click="stampAndGet">盖章并获取</el-button>
         <el-button type="primary" v-on:click="printExcel">打印EXCEL</el-button>*@
     </el-form>
@@ -141,6 +142,12 @@
                     UserId: DingData.userid,
                     TaskId: TaskId
                 }, () => { this.$message({ type: 'success', message: `获取成功，请在工作通知中查收` }); })
+            },
+            printBom() {
+                this.GetData('PurchaseNew/PrintExcel' + _formatQueryStr({
+                    UserId: DingData.userid,
+                    TaskId: TaskId
+                }), () => { this.elementAlert('提示信息', '获取成功，请在工作通知中查收') })
             },
             getBomInfo() {
                 var that = this
